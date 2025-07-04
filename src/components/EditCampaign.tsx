@@ -267,13 +267,13 @@ export function EditCampaign() {
       const leadsToInsert = leads.map(lead => ({
         user_id: user.id,
         campaign_id: campaign.id,
-        name: lead.name || null,
-        phone: lead.phone || null,
-        email: lead.email || null,
-        company_name: lead.company_name || null,
-        job_title: lead.job_title || null,
-        source_url: lead.source_url || null,
-        source_platform: lead.source_platform || null,
+        name: lead.name || '',
+        phone: lead.phone || '',
+        email: lead.email || '',
+        company_name: lead.company_name || '',
+        job_title: lead.job_title || '',
+        source_url: lead.source_url || '',
+        source_platform: lead.source_platform || '',
         status: 'pending'
       }));
 
