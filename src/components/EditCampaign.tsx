@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Save, Upload, MessageCircle, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, Upload, MessageCircle, CheckCircle, XCircle, AlertCircle, Eye, ArrowRight } from 'lucide-react';
 
 interface Campaign {
   id: string;
@@ -21,6 +21,26 @@ interface UploadResult {
   errors?: string[];
 }
 
+interface CSVPreview {
+  headers: string[];
+  rows: string[][];
+  totalRows: number;
+}
+
+interface ColumnMapping {
+  [csvColumn: string]: string; // Maps CSV column to database column
+}
+
+const DATABASE_COLUMNS = [
+  { key: 'name', label: 'Name', required: false },
+  { key: 'phone', label: 'Phone Number', required: false },
+  { key: 'email', label: 'Email Address', required: false },
+  { key: 'company_name', label: 'Company Name', required: false },
+  { key: 'job_title', label: 'Job Title', required: false },
+  { key: 'source_url', label: 'Source URL', required: false },
+  { key: 'source_platform', label: 'Source Platform', required: false },
+];
+
 export function EditCampaign() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -32,6 +52,9 @@ export function EditCampaign() {
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
+  const [csvPreview, setCsvPreview] = useState<CSVPreview | null>(null);
+  const [columnMapping, setColumnMapping] = useState<ColumnMapping>({});
+  const [showPreview, setShowPreview] = useState(false);
   const [formData, setFormData] = useState({
     offer: '',
     calendar_url: '',
@@ -104,11 +127,80 @@ export function EditCampaign() {
     }
   };
 
-  const parseCSV = (csvText: string) => {
+  const parseCSVForPreview = (csvText: string): CSVPreview => {
     const lines = csvText.split('\n').filter(line => line.trim());
-    if (lines.length < 2) return [];
+    if (lines.length === 0) return { headers: [], rows: [], totalRows: 0 };
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    const rows = lines.slice(1, 6).map(line => // Show first 5 rows for preview
+      line.split(',').map(cell => cell.trim().replace(/"/g, ''))
+    );
+
+    return {
+      headers,
+      rows,
+      totalRows: lines.length - 1
+    };
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCsvFile(file);
+    setUploadResult(null);
+    setShowPreview(false);
+
+    try {
+      const csvText = await file.text();
+      const preview = parseCSVForPreview(csvText);
+      setCsvPreview(preview);
+
+      // Auto-suggest column mappings
+      const autoMapping: ColumnMapping = {};
+      preview.headers.forEach(header => {
+        const lowerHeader = header.toLowerCase();
+        if (lowerHeader.includes('name') || lowerHeader.includes('full_name') || lowerHeader.includes('first_name')) {
+          autoMapping[header] = 'name';
+        } else if (lowerHeader.includes('phone') || lowerHeader.includes('mobile') || lowerHeader.includes('number')) {
+          autoMapping[header] = 'phone';
+        } else if (lowerHeader.includes('email') || lowerHeader.includes('mail')) {
+          autoMapping[header] = 'email';
+        } else if (lowerHeader.includes('company') || lowerHeader.includes('organization')) {
+          autoMapping[header] = 'company_name';
+        } else if (lowerHeader.includes('title') || lowerHeader.includes('position') || lowerHeader.includes('job')) {
+          autoMapping[header] = 'job_title';
+        } else if (lowerHeader.includes('url') || lowerHeader.includes('website')) {
+          autoMapping[header] = 'source_url';
+        } else if (lowerHeader.includes('platform') || lowerHeader.includes('source')) {
+          autoMapping[header] = 'source_platform';
+        }
+      });
+
+      setColumnMapping(autoMapping);
+      setShowPreview(true);
+    } catch (error) {
+      console.error('Error parsing CSV:', error);
+      setUploadResult({
+        success: false,
+        message: 'Error reading CSV file. Please check the file format.',
+        errors: ['Make sure the file is a valid CSV with comma-separated values']
+      });
+    }
+  };
+
+  const handleColumnMappingChange = (csvColumn: string, dbColumn: string) => {
+    setColumnMapping(prev => ({
+      ...prev,
+      [csvColumn]: dbColumn === 'none' ? '' : dbColumn
+    }));
+  };
+
+  const processCSVWithMapping = (csvText: string) => {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length < 2) return { leads: [], errors: [] };
+
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
     const leads = [];
     const errors = [];
 
@@ -117,42 +209,9 @@ export function EditCampaign() {
       const lead: any = {};
 
       headers.forEach((header, index) => {
-        const value = values[index] || null;
-        switch (header) {
-          case 'name':
-          case 'full_name':
-          case 'first_name':
-            lead.name = value;
-            break;
-          case 'phone':
-          case 'phone_number':
-          case 'mobile':
-            lead.phone = value;
-            break;
-          case 'email':
-          case 'email_address':
-            lead.email = value;
-            break;
-          case 'company_name':
-          case 'company':
-          case 'organization':
-            lead.company_name = value;
-            break;
-          case 'job_title':
-          case 'title':
-          case 'position':
-            lead.job_title = value;
-            break;
-          case 'source_url':
-          case 'url':
-          case 'website':
-            lead.source_url = value;
-            break;
-          case 'source_platform':
-          case 'platform':
-          case 'source':
-            lead.source_platform = value;
-            break;
+        const dbColumn = columnMapping[header];
+        if (dbColumn && values[index]) {
+          lead[dbColumn] = values[index];
         }
       });
 
@@ -174,13 +233,13 @@ export function EditCampaign() {
 
     try {
       const csvText = await csvFile.text();
-      const { leads, errors } = parseCSV(csvText);
+      const { leads, errors } = processCSVWithMapping(csvText);
 
       if (leads.length === 0) {
         setUploadResult({
           success: false,
           message: 'No valid leads found in CSV file.',
-          errors: ['Please ensure your CSV has columns for name, phone, or email', ...errors]
+          errors: ['Please ensure at least one row has name, phone, or email data', ...errors]
         });
         return;
       }
@@ -189,13 +248,13 @@ export function EditCampaign() {
       const leadsToInsert = leads.map(lead => ({
         user_id: user.id,
         campaign_id: campaign.id,
-        name: lead.name,
-        phone: lead.phone,
-        email: lead.email,
-        company_name: lead.company_name,
-        job_title: lead.job_title,
-        source_url: lead.source_url,
-        source_platform: lead.source_platform,
+        name: lead.name || null,
+        phone: lead.phone || null,
+        email: lead.email || null,
+        company_name: lead.company_name || null,
+        job_title: lead.job_title || null,
+        source_url: lead.source_url || null,
+        source_platform: lead.source_platform || null,
         status: 'pending'
       }));
 
@@ -242,7 +301,11 @@ export function EditCampaign() {
         ]
       });
 
+      // Reset form
       setCsvFile(null);
+      setCsvPreview(null);
+      setShowPreview(false);
+      setColumnMapping({});
     } catch (error) {
       console.error('Error uploading CSV:', error);
       setUploadResult({
@@ -263,6 +326,14 @@ export function EditCampaign() {
   };
 
   const clearUploadResult = () => {
+    setUploadResult(null);
+  };
+
+  const resetUpload = () => {
+    setCsvFile(null);
+    setCsvPreview(null);
+    setShowPreview(false);
+    setColumnMapping({});
     setUploadResult(null);
   };
 
@@ -518,48 +589,154 @@ export function EditCampaign() {
           {/* Upload Leads Tab */}
           {activeTab === 'leads' && (
             <div className="space-y-6">
-              <div className="text-center py-12">
-                <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Upload CSV File
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Upload a CSV file with your leads data. Supported columns: name, phone, email, company_name, job_title, source_url, source_platform
-                </p>
-                
-                <div className="max-w-md mx-auto space-y-4">
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={(e) => {
-                      setCsvFile(e.target.files?.[0] || null);
-                      setUploadResult(null); // Clear previous results
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+              {!showPreview ? (
+                // File Upload Section
+                <div className="text-center py-12">
+                  <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Upload CSV File
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Upload a CSV file with your leads data. We'll help you map the columns to match our database.
+                  </p>
                   
-                  <button
-                    onClick={handleFileUpload}
-                    disabled={!csvFile || uploadLoading}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {uploadLoading ? (
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Uploading...
-                      </div>
-                    ) : (
-                      'Upload CSV File'
-                    )}
-                  </button>
-                </div>
+                  <div className="max-w-md mx-auto space-y-4">
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleFileSelect}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
 
-                <div className="text-xs text-gray-500 mt-4 space-y-1">
-                  <p>• CSV files only with comma-separated values</p>
-                  <p>• First row should contain column headers</p>
-                  <p>• At least one of: name, phone, or email is required per row</p>
+                  <div className="text-xs text-gray-500 mt-4 space-y-1">
+                    <p>• CSV files only with comma-separated values</p>
+                    <p>• First row should contain column headers</p>
+                    <p>• We support various column names and will help you map them</p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                // CSV Preview and Column Mapping Section
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">CSV Preview & Column Mapping</h3>
+                      <p className="text-sm text-gray-600">
+                        {csvPreview?.totalRows} total rows found. Map your CSV columns to our database fields.
+                      </p>
+                    </div>
+                    <button
+                      onClick={resetUpload}
+                      className="text-sm text-gray-600 hover:text-gray-800"
+                    >
+                      Choose Different File
+                    </button>
+                  </div>
+
+                  {/* Column Mapping */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">Column Mapping</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {csvPreview?.headers.map((header, index) => (
+                        <div key={index} className="flex items-center space-x-3">
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              CSV Column: "{header}"
+                            </label>
+                            <select
+                              value={columnMapping[header] || ''}
+                              onChange={(e) => handleColumnMappingChange(header, e.target.value)}
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="">Don't import this column</option>
+                              {DATABASE_COLUMNS.map((dbCol) => (
+                                <option key={dbCol.key} value={dbCol.key}>
+                                  {dbCol.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          {columnMapping[header] && (
+                            <div className="flex-shrink-0 text-green-600">
+                              <ArrowRight className="h-4 w-4" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Data Preview */}
+                  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                      <h4 className="text-sm font-medium text-gray-900 flex items-center">
+                        <Eye className="h-4 w-4 mr-2" />
+                        Data Preview (First 5 rows)
+                      </h4>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            {csvPreview?.headers.map((header, index) => (
+                              <th key={index} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div>
+                                  <div className="font-semibold">{header}</div>
+                                  {columnMapping[header] && (
+                                    <div className="text-green-600 normal-case">
+                                      → {DATABASE_COLUMNS.find(col => col.key === columnMapping[header])?.label}
+                                    </div>
+                                  )}
+                                </div>
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {csvPreview?.rows.map((row, rowIndex) => (
+                            <tr key={rowIndex} className="hover:bg-gray-50">
+                              {row.map((cell, cellIndex) => (
+                                <td key={cellIndex} className="px-4 py-2 text-sm text-gray-900 max-w-xs truncate">
+                                  {cell || '-'}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Upload Actions */}
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-gray-600">
+                      {Object.values(columnMapping).filter(Boolean).length} columns mapped
+                    </div>
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={resetUpload}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleFileUpload}
+                        disabled={uploadLoading || Object.values(columnMapping).filter(Boolean).length === 0}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {uploadLoading ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Uploading {csvPreview?.totalRows} leads...
+                          </div>
+                        ) : (
+                          `Upload ${csvPreview?.totalRows} Leads`
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
