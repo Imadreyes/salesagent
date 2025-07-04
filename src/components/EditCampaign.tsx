@@ -28,17 +28,17 @@ interface CSVPreview {
 }
 
 interface ColumnMapping {
-  [csvColumn: string]: string; // Maps CSV column to database column
+  [dbColumn: string]: string; // Maps database column to CSV column
 }
 
 const DATABASE_COLUMNS = [
-  { key: 'name', label: 'Name', required: false },
-  { key: 'phone', label: 'Phone Number', required: false },
-  { key: 'email', label: 'Email Address', required: false },
-  { key: 'company_name', label: 'Company Name', required: false },
-  { key: 'job_title', label: 'Job Title', required: false },
-  { key: 'source_url', label: 'Source URL', required: false },
-  { key: 'source_platform', label: 'Source Platform', required: false },
+  { key: 'name', label: 'Name', description: 'Contact\'s full name', required: false },
+  { key: 'phone', label: 'Phone Number', description: 'Contact phone number', required: false },
+  { key: 'email', label: 'Email Address', description: 'Contact email address', required: false },
+  { key: 'company_name', label: 'Company Name', description: 'Company or organization name', required: false },
+  { key: 'job_title', label: 'Job Title', description: 'Contact\'s position or role', required: false },
+  { key: 'source_url', label: 'Source URL', description: 'Website or profile URL', required: false },
+  { key: 'source_platform', label: 'Source Platform', description: 'Platform where contact was found', required: false },
 ];
 
 export function EditCampaign() {
@@ -156,24 +156,40 @@ export function EditCampaign() {
       const preview = parseCSVForPreview(csvText);
       setCsvPreview(preview);
 
-      // Auto-suggest column mappings
+      // Auto-suggest column mappings based on common patterns
       const autoMapping: ColumnMapping = {};
-      preview.headers.forEach(header => {
-        const lowerHeader = header.toLowerCase();
-        if (lowerHeader.includes('name') || lowerHeader.includes('full_name') || lowerHeader.includes('first_name')) {
-          autoMapping[header] = 'name';
-        } else if (lowerHeader.includes('phone') || lowerHeader.includes('mobile') || lowerHeader.includes('number')) {
-          autoMapping[header] = 'phone';
-        } else if (lowerHeader.includes('email') || lowerHeader.includes('mail')) {
-          autoMapping[header] = 'email';
-        } else if (lowerHeader.includes('company') || lowerHeader.includes('organization')) {
-          autoMapping[header] = 'company_name';
-        } else if (lowerHeader.includes('title') || lowerHeader.includes('position') || lowerHeader.includes('job')) {
-          autoMapping[header] = 'job_title';
-        } else if (lowerHeader.includes('url') || lowerHeader.includes('website')) {
-          autoMapping[header] = 'source_url';
-        } else if (lowerHeader.includes('platform') || lowerHeader.includes('source')) {
-          autoMapping[header] = 'source_platform';
+      
+      DATABASE_COLUMNS.forEach(dbCol => {
+        const matchingHeader = preview.headers.find(header => {
+          const lowerHeader = header.toLowerCase();
+          const lowerDbKey = dbCol.key.toLowerCase();
+          
+          // Direct matches
+          if (lowerHeader === lowerDbKey) return true;
+          
+          // Pattern matching
+          switch (dbCol.key) {
+            case 'name':
+              return lowerHeader.includes('name') || lowerHeader.includes('full_name') || lowerHeader.includes('first_name');
+            case 'phone':
+              return lowerHeader.includes('phone') || lowerHeader.includes('mobile') || lowerHeader.includes('number') || lowerHeader === 'tel';
+            case 'email':
+              return lowerHeader.includes('email') || lowerHeader.includes('mail') || lowerHeader === 'e-mail';
+            case 'company_name':
+              return lowerHeader.includes('company') || lowerHeader.includes('organization') || lowerHeader.includes('org');
+            case 'job_title':
+              return lowerHeader.includes('title') || lowerHeader.includes('position') || lowerHeader.includes('job') || lowerHeader.includes('role');
+            case 'source_url':
+              return lowerHeader.includes('url') || lowerHeader.includes('website') || lowerHeader.includes('link');
+            case 'source_platform':
+              return lowerHeader.includes('platform') || lowerHeader.includes('source') || lowerHeader.includes('site');
+            default:
+              return false;
+          }
+        });
+        
+        if (matchingHeader) {
+          autoMapping[dbCol.key] = matchingHeader;
         }
       });
 
@@ -189,10 +205,10 @@ export function EditCampaign() {
     }
   };
 
-  const handleColumnMappingChange = (csvColumn: string, dbColumn: string) => {
+  const handleColumnMappingChange = (dbColumn: string, csvColumn: string) => {
     setColumnMapping(prev => ({
       ...prev,
-      [csvColumn]: dbColumn === 'none' ? '' : dbColumn
+      [dbColumn]: csvColumn === 'none' ? '' : csvColumn
     }));
   };
 
@@ -208,10 +224,13 @@ export function EditCampaign() {
       const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
       const lead: any = {};
 
-      headers.forEach((header, index) => {
-        const dbColumn = columnMapping[header];
-        if (dbColumn && values[index]) {
-          lead[dbColumn] = values[index];
+      // Map values based on column mapping
+      Object.entries(columnMapping).forEach(([dbColumn, csvColumn]) => {
+        if (csvColumn) {
+          const csvIndex = headers.indexOf(csvColumn);
+          if (csvIndex !== -1 && values[csvIndex]) {
+            lead[dbColumn] = values[csvIndex];
+          }
         }
       });
 
@@ -597,7 +616,7 @@ export function EditCampaign() {
                     Upload CSV File
                   </h3>
                   <p className="text-gray-600 mb-6">
-                    Upload a CSV file with your leads data. We'll help you map the columns to match our database.
+                    Upload a CSV file with your leads data. We'll help you map your columns to our database fields.
                   </p>
                   
                   <div className="max-w-md mx-auto space-y-4">
@@ -622,7 +641,7 @@ export function EditCampaign() {
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">CSV Preview & Column Mapping</h3>
                       <p className="text-sm text-gray-600">
-                        {csvPreview?.totalRows} total rows found. Map your CSV columns to our database fields.
+                        {csvPreview?.totalRows} total rows found. Map our database fields to your CSV columns.
                       </p>
                     </div>
                     <button
@@ -633,34 +652,45 @@ export function EditCampaign() {
                     </button>
                   </div>
 
-                  {/* Column Mapping */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">Column Mapping</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {csvPreview?.headers.map((header, index) => (
-                        <div key={index} className="flex items-center space-x-3">
+                  {/* Column Mapping - Database Fields First */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h4 className="text-sm font-medium text-gray-900 mb-4 flex items-center">
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                      Column Mapping
+                    </h4>
+                    <div className="space-y-4">
+                      {DATABASE_COLUMNS.map((dbCol) => (
+                        <div key={dbCol.key} className="flex items-center space-x-4 p-4 bg-white rounded-lg border border-gray-200">
                           <div className="flex-1">
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              CSV Column: "{header}"
-                            </label>
+                            <div className="flex items-center space-x-2">
+                              <label className="text-sm font-medium text-gray-900">
+                                {dbCol.label}
+                              </label>
+                              {columnMapping[dbCol.key] && (
+                                <div className="flex items-center text-green-600">
+                                  <ArrowRight className="h-3 w-3 mx-1" />
+                                  <span className="text-xs font-medium">
+                                    "{columnMapping[dbCol.key]}"
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">{dbCol.description}</p>
+                          </div>
+                          <div className="flex-shrink-0 w-48">
                             <select
-                              value={columnMapping[header] || ''}
-                              onChange={(e) => handleColumnMappingChange(header, e.target.value)}
+                              value={columnMapping[dbCol.key] || ''}
+                              onChange={(e) => handleColumnMappingChange(dbCol.key, e.target.value)}
                               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                              <option value="">Don't import this column</option>
-                              {DATABASE_COLUMNS.map((dbCol) => (
-                                <option key={dbCol.key} value={dbCol.key}>
-                                  {dbCol.label}
+                              <option value="">Select CSV column...</option>
+                              {csvPreview?.headers.map((header) => (
+                                <option key={header} value={header}>
+                                  {header}
                                 </option>
                               ))}
                             </select>
                           </div>
-                          {columnMapping[header] && (
-                            <div className="flex-shrink-0 text-green-600">
-                              <ArrowRight className="h-4 w-4" />
-                            </div>
-                          )}
                         </div>
                       ))}
                     </div>
@@ -678,15 +708,13 @@ export function EditCampaign() {
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            {csvPreview?.headers.map((header, index) => (
-                              <th key={index} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {DATABASE_COLUMNS.filter(col => columnMapping[col.key]).map((dbCol) => (
+                              <th key={dbCol.key} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <div>
-                                  <div className="font-semibold">{header}</div>
-                                  {columnMapping[header] && (
-                                    <div className="text-green-600 normal-case">
-                                      → {DATABASE_COLUMNS.find(col => col.key === columnMapping[header])?.label}
-                                    </div>
-                                  )}
+                                  <div className="font-semibold text-blue-600">{dbCol.label}</div>
+                                  <div className="text-gray-600 normal-case">
+                                    from "{columnMapping[dbCol.key]}"
+                                  </div>
                                 </div>
                               </th>
                             ))}
@@ -695,11 +723,15 @@ export function EditCampaign() {
                         <tbody className="bg-white divide-y divide-gray-200">
                           {csvPreview?.rows.map((row, rowIndex) => (
                             <tr key={rowIndex} className="hover:bg-gray-50">
-                              {row.map((cell, cellIndex) => (
-                                <td key={cellIndex} className="px-4 py-2 text-sm text-gray-900 max-w-xs truncate">
-                                  {cell || '-'}
-                                </td>
-                              ))}
+                              {DATABASE_COLUMNS.filter(col => columnMapping[col.key]).map((dbCol) => {
+                                const csvColumnIndex = csvPreview.headers.indexOf(columnMapping[dbCol.key]);
+                                const cellValue = csvColumnIndex !== -1 ? row[csvColumnIndex] : '';
+                                return (
+                                  <td key={dbCol.key} className="px-4 py-2 text-sm text-gray-900 max-w-xs truncate">
+                                    {cellValue || '-'}
+                                  </td>
+                                );
+                              })}
                             </tr>
                           ))}
                         </tbody>
@@ -710,7 +742,7 @@ export function EditCampaign() {
                   {/* Upload Actions */}
                   <div className="flex justify-between items-center">
                     <div className="text-sm text-gray-600">
-                      {Object.values(columnMapping).filter(Boolean).length} columns mapped
+                      {Object.values(columnMapping).filter(Boolean).length} fields mapped
                     </div>
                     <div className="flex space-x-3">
                       <button
