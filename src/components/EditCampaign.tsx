@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Save, Upload, MessageCircle, CheckCircle, XCircle, AlertCircle, Eye, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Save, Upload, MessageCircle, CheckCircle, XCircle, AlertCircle, Eye, ArrowRight, ArrowDown } from 'lucide-react';
 
 interface Campaign {
   id: string;
@@ -384,7 +384,7 @@ export function EditCampaign() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-4">
           <Link
             to="/campaigns"
@@ -393,7 +393,7 @@ export function EditCampaign() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{campaign.offer || 'Untitled Campaign'}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{campaign.offer || 'Untitled Campaign'}</h1>
             <p className="mt-1 text-sm text-gray-500">
               Campaign ID: {campaign.id}
             </p>
@@ -477,55 +477,33 @@ export function EditCampaign() {
       {/* Tabs */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
-            <button
-              onClick={() => setActiveTab('details')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'details'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Campaign Details
-            </button>
-            <button
-              onClick={() => setActiveTab('leads')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'leads'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Upload Leads
-            </button>
-            <button
-              onClick={() => setActiveTab('chat')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'chat'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Training AI Center
-            </button>
-            <button
-              onClick={() => setActiveTab('schedule')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'schedule'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Schedule
-            </button>
+          <nav className="flex overflow-x-auto px-4 sm:px-6">
+            {[
+              { key: 'details', label: 'Campaign Details' },
+              { key: 'leads', label: 'Upload Leads' },
+              { key: 'chat', label: 'Training AI Center' },
+              { key: 'schedule', label: 'Schedule' }
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as any)}
+                className={`py-4 px-4 border-b-2 font-medium text-sm whitespace-nowrap ${
+                  activeTab === tab.key
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </nav>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Campaign Details Tab */}
           {activeTab === 'details' && (
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="offer" className="block text-sm font-medium text-gray-700 mb-2">
                     Campaign Offer *
@@ -615,11 +593,11 @@ export function EditCampaign() {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     Upload CSV File
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-gray-600 mb-6 px-4">
                     Upload a CSV file with your leads data. We'll help you map your columns to our database fields.
                   </p>
                   
-                  <div className="max-w-md mx-auto space-y-4">
+                  <div className="max-w-md mx-auto space-y-4 px-4">
                     <input
                       type="file"
                       accept=".csv"
@@ -628,7 +606,7 @@ export function EditCampaign() {
                     />
                   </div>
 
-                  <div className="text-xs text-gray-500 mt-4 space-y-1">
+                  <div className="text-xs text-gray-500 mt-4 space-y-1 px-4">
                     <p>• CSV files only with comma-separated values</p>
                     <p>• First row should contain column headers</p>
                     <p>• We support various column names and will help you map them</p>
@@ -637,7 +615,7 @@ export function EditCampaign() {
               ) : (
                 // CSV Preview and Column Mapping Section
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">CSV Preview & Column Mapping</h3>
                       <p className="text-sm text-gray-600">
@@ -646,38 +624,45 @@ export function EditCampaign() {
                     </div>
                     <button
                       onClick={resetUpload}
-                      className="text-sm text-gray-600 hover:text-gray-800"
+                      className="text-sm text-gray-600 hover:text-gray-800 self-start sm:self-auto"
                     >
                       Choose Different File
                     </button>
                   </div>
 
-                  {/* Column Mapping - Database Fields First */}
-                  <div className="bg-gray-50 rounded-lg p-6">
+                  {/* Column Mapping - Responsive Layout */}
+                  <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
                     <h4 className="text-sm font-medium text-gray-900 mb-4 flex items-center">
-                      <ArrowRight className="h-4 w-4 mr-2" />
+                      <ArrowRight className="h-4 w-4 mr-2 hidden sm:block" />
+                      <ArrowDown className="h-4 w-4 mr-2 sm:hidden" />
                       Column Mapping
                     </h4>
                     <div className="space-y-4">
                       {DATABASE_COLUMNS.map((dbCol) => (
-                        <div key={dbCol.key} className="flex items-center space-x-4 p-4 bg-white rounded-lg border border-gray-200">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2">
-                              <label className="text-sm font-medium text-gray-900">
-                                {dbCol.label}
-                              </label>
+                        <div key={dbCol.key} className="bg-white rounded-lg border border-gray-200 p-4">
+                          {/* Mobile Layout */}
+                          <div className="block sm:hidden space-y-3">
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-gray-900">
+                                  {dbCol.label}
+                                </label>
+                                {columnMapping[dbCol.key] && (
+                                  <span className="text-xs text-green-600 font-medium">
+                                    Mapped
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">{dbCol.description}</p>
                               {columnMapping[dbCol.key] && (
-                                <div className="flex items-center text-green-600">
-                                  <ArrowRight className="h-3 w-3 mx-1" />
+                                <div className="flex items-center text-green-600 mt-2">
+                                  <ArrowDown className="h-3 w-3 mr-1" />
                                   <span className="text-xs font-medium">
-                                    "{columnMapping[dbCol.key]}"
+                                    From: "{columnMapping[dbCol.key]}"
                                   </span>
                                 </div>
                               )}
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">{dbCol.description}</p>
-                          </div>
-                          <div className="flex-shrink-0 w-48">
                             <select
                               value={columnMapping[dbCol.key] || ''}
                               onChange={(e) => handleColumnMappingChange(dbCol.key, e.target.value)}
@@ -691,12 +676,46 @@ export function EditCampaign() {
                               ))}
                             </select>
                           </div>
+
+                          {/* Desktop Layout */}
+                          <div className="hidden sm:flex sm:items-center sm:space-x-4">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <label className="text-sm font-medium text-gray-900">
+                                  {dbCol.label}
+                                </label>
+                                {columnMapping[dbCol.key] && (
+                                  <div className="flex items-center text-green-600">
+                                    <ArrowRight className="h-3 w-3 mx-1" />
+                                    <span className="text-xs font-medium">
+                                      "{columnMapping[dbCol.key]}"
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">{dbCol.description}</p>
+                            </div>
+                            <div className="flex-shrink-0 w-48">
+                              <select
+                                value={columnMapping[dbCol.key] || ''}
+                                onChange={(e) => handleColumnMappingChange(dbCol.key, e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="">Select CSV column...</option>
+                                {csvPreview?.headers.map((header) => (
+                                  <option key={header} value={header}>
+                                    {header}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Data Preview */}
+                  {/* Data Preview - Responsive Table */}
                   <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                     <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
                       <h4 className="text-sm font-medium text-gray-900 flex items-center">
@@ -709,10 +728,10 @@ export function EditCampaign() {
                         <thead className="bg-gray-50">
                           <tr>
                             {DATABASE_COLUMNS.filter(col => columnMapping[col.key]).map((dbCol) => (
-                              <th key={dbCol.key} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <div>
-                                  <div className="font-semibold text-blue-600">{dbCol.label}</div>
-                                  <div className="text-gray-600 normal-case">
+                              <th key={dbCol.key} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">
+                                <div className="space-y-1">
+                                  <div className="font-semibold text-blue-600 truncate">{dbCol.label}</div>
+                                  <div className="text-gray-600 normal-case text-xs truncate">
                                     from "{columnMapping[dbCol.key]}"
                                   </div>
                                 </div>
@@ -727,7 +746,7 @@ export function EditCampaign() {
                                 const csvColumnIndex = csvPreview.headers.indexOf(columnMapping[dbCol.key]);
                                 const cellValue = csvColumnIndex !== -1 ? row[csvColumnIndex] : '';
                                 return (
-                                  <td key={dbCol.key} className="px-4 py-2 text-sm text-gray-900 max-w-xs truncate">
+                                  <td key={dbCol.key} className="px-3 py-2 text-sm text-gray-900 max-w-xs truncate">
                                     {cellValue || '-'}
                                   </td>
                                 );
@@ -739,12 +758,12 @@ export function EditCampaign() {
                     </div>
                   </div>
 
-                  {/* Upload Actions */}
-                  <div className="flex justify-between items-center">
+                  {/* Upload Actions - Responsive */}
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                     <div className="text-sm text-gray-600">
                       {Object.values(columnMapping).filter(Boolean).length} fields mapped
                     </div>
-                    <div className="flex space-x-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <button
                         onClick={resetUpload}
                         className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
@@ -757,7 +776,7 @@ export function EditCampaign() {
                         className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         {uploadLoading ? (
-                          <div className="flex items-center">
+                          <div className="flex items-center justify-center">
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                             Uploading {csvPreview?.totalRows} leads...
                           </div>
@@ -781,7 +800,7 @@ export function EditCampaign() {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     Training AI Center
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 px-4">
                     🚧 Coming soon: Train your AI caller agent using conversational prompts and sequences.
                   </p>
                 </div>
@@ -809,7 +828,7 @@ export function EditCampaign() {
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">Campaign Schedule</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Start Date
@@ -831,7 +850,7 @@ export function EditCampaign() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Daily Limit
@@ -857,7 +876,7 @@ export function EditCampaign() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Working Hours Start
