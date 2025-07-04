@@ -90,29 +90,91 @@ export function EditCampaign() {
     }
   };
 
+  const parseCSV = (csvText: string) => {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const leads = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      const lead: any = {};
+
+      headers.forEach((header, index) => {
+        const value = values[index] || null;
+        switch (header) {
+          case 'name':
+            lead.name = value;
+            break;
+          case 'phone':
+            lead.phone = value;
+            break;
+          case 'email':
+            lead.email = value;
+            break;
+          case 'company_name':
+          case 'company':
+            lead.company_name = value;
+            break;
+          case 'job_title':
+          case 'title':
+            lead.job_title = value;
+            break;
+          case 'source_url':
+          case 'url':
+            lead.source_url = value;
+            break;
+          case 'source_platform':
+          case 'platform':
+            lead.source_platform = value;
+            break;
+        }
+      });
+
+      if (lead.name || lead.phone || lead.email) {
+        leads.push(lead);
+      }
+    }
+
+    return leads;
+  };
+
   const handleFileUpload = async () => {
     if (!csvFile || !user || !campaign) return;
 
     setUploadLoading(true);
     try {
-      // Create FormData to send CSV file with campaign data and user ID
-      const formData = new FormData();
-      formData.append('user_id', user.id);
-      formData.append('campaign', JSON.stringify(campaign));
-      formData.append('csv', csvFile);
+      const csvText = await csvFile.text();
+      const leads = parseCSV(csvText);
 
-      // Send directly to webhook
-      const response = await fetch('https://mazirhx.app.n8n.cloud/webhook/start-campaign-upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Webhook request failed');
+      if (leads.length === 0) {
+        alert('No valid leads found in CSV file. Please check the format.');
+        return;
       }
 
+      // Insert leads into uploaded_leads table
+      const leadsToInsert = leads.map(lead => ({
+        user_id: user.id,
+        campaign_id: campaign.id,
+        name: lead.name,
+        phone: lead.phone,
+        email: lead.email,
+        company_name: lead.company_name,
+        job_title: lead.job_title,
+        source_url: lead.source_url,
+        source_platform: lead.source_platform,
+        status: 'pending'
+      }));
+
+      const { error } = await supabase
+        .from('uploaded_leads')
+        .insert(leadsToInsert);
+
+      if (error) throw error;
+
       setCsvFile(null);
-      alert('CSV uploaded successfully and webhook triggered!');
+      alert(`Successfully uploaded ${leads.length} leads to the database!`);
     } catch (error) {
       console.error('Error uploading CSV:', error);
       alert('Error uploading CSV. Please try again.');
@@ -336,7 +398,7 @@ export function EditCampaign() {
                   Upload CSV File
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Upload a CSV file with your leads data
+                  Upload a CSV file with your leads data. Expected columns: name, phone, email, company_name, job_title, source_url, source_platform
                 </p>
                 
                 <div className="max-w-md mx-auto space-y-4">
@@ -352,7 +414,7 @@ export function EditCampaign() {
                     disabled={!csvFile || uploadLoading}
                     className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {uploadLoading ? 'Uploading...' : 'Choose CSV File'}
+                    {uploadLoading ? 'Uploading...' : 'Upload CSV File'}
                   </button>
                 </div>
 

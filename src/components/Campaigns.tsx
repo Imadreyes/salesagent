@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Plus, Upload, Target, Calendar, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Target, Calendar, Edit2, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Campaign {
@@ -19,15 +19,12 @@ export function Campaigns() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     offer: '',
     calendar_url: '',
     goal: '',
     status: 'draft',
   });
-  const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [uploadLoading, setUploadLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -74,44 +71,6 @@ export function Campaigns() {
     }
   };
 
-  const handleFileUpload = async (campaignId: string) => {
-    if (!csvFile || !user) return;
-
-    setUploadLoading(true);
-    try {
-      // Get the campaign data
-      const campaign = campaigns.find(c => c.id === campaignId);
-      if (!campaign) {
-        throw new Error('Campaign not found');
-      }
-
-      // Create FormData to send CSV file with campaign data and user ID
-      const formData = new FormData();
-      formData.append('user_id', user.id);
-      formData.append('campaign', JSON.stringify(campaign));
-      formData.append('csv', csvFile);
-
-      // Send directly to webhook
-      const response = await fetch('https://mazirhx.app.n8n.cloud/webhook/start-campaign-upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Webhook request failed');
-      }
-
-      setCsvFile(null);
-      setShowUploadModal(null);
-      alert('CSV uploaded successfully and webhook triggered!');
-    } catch (error) {
-      console.error('Error uploading CSV:', error);
-      alert('Error uploading CSV. Please try again.');
-    } finally {
-      setUploadLoading(false);
-    }
-  };
-
   const handleDeleteCampaign = async (campaignId: string) => {
     if (!confirm('Are you sure you want to delete this campaign?')) return;
 
@@ -143,7 +102,7 @@ export function Campaigns() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Campaigns</h1>
           <p className="mt-2 text-gray-600">
-            Manage your outreach campaigns and upload leads
+            Manage your outreach campaigns
           </p>
         </div>
         <button
@@ -268,27 +227,20 @@ export function Campaigns() {
               <span className="text-xs text-gray-500">
                 {new Date(campaign.created_at).toLocaleDateString()}
               </span>
-              <button
-                onClick={() => setShowUploadModal(campaign.id)}
-                className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-600 text-sm font-medium rounded-lg hover:bg-blue-100 transition-colors"
-              >
-                <Upload className="h-4 w-4 mr-1" />
-                Upload CSV
-              </button>
             </div>
 
-            {/* Action buttons with icons */}
+            {/* Action buttons with grey styling */}
             <div className="flex justify-end gap-2">
               <Link
                 to={`/campaigns/${campaign.id}/edit`}
-                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Edit campaign"
               >
                 <Edit2 className="h-4 w-4" />
               </Link>
               <button
                 onClick={() => handleDeleteCampaign(campaign.id)}
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Delete campaign"
               >
                 <Trash2 className="h-4 w-4" />
@@ -315,50 +267,6 @@ export function Campaigns() {
             <Plus className="h-4 w-4 mr-2" />
             Create Your First Campaign
           </button>
-        </div>
-      )}
-
-      {/* Upload Modal */}
-      {showUploadModal && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Upload Leads CSV
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Upload a CSV file with columns: name, phone, email, company_name, job_title, source_url, source_platform
-            </p>
-            
-            <div className="space-y-4">
-              <div>
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setShowUploadModal(null);
-                    setCsvFile(null);
-                  }}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleFileUpload(showUploadModal)}
-                  disabled={!csvFile || uploadLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {uploadLoading ? 'Uploading...' : 'Upload'}
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </div>
