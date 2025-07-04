@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Save, Upload, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Save, Upload, MessageCircle, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 interface Campaign {
   id: string;
@@ -12,6 +12,13 @@ interface Campaign {
   goal: string | null;
   status: string | null;
   created_at: string;
+}
+
+interface UploadResult {
+  success: boolean;
+  message: string;
+  leadsCount?: number;
+  errors?: string[];
 }
 
 export function EditCampaign() {
@@ -24,6 +31,7 @@ export function EditCampaign() {
   const [activeTab, setActiveTab] = useState<'details' | 'leads' | 'chat' | 'schedule'>('details');
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [formData, setFormData] = useState({
     offer: '',
     calendar_url: '',
@@ -81,10 +89,16 @@ export function EditCampaign() {
 
       if (error) throw error;
 
-      alert('Campaign updated successfully!');
+      setUploadResult({
+        success: true,
+        message: 'Campaign updated successfully!'
+      });
     } catch (error) {
       console.error('Error updating campaign:', error);
-      alert('Error updating campaign. Please try again.');
+      setUploadResult({
+        success: false,
+        message: 'Error updating campaign. Please try again.'
+      });
     } finally {
       setSaving(false);
     }
@@ -94,39 +108,49 @@ export function EditCampaign() {
     const lines = csvText.split('\n').filter(line => line.trim());
     if (lines.length < 2) return [];
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
     const leads = [];
+    const errors = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim());
+      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
       const lead: any = {};
 
       headers.forEach((header, index) => {
         const value = values[index] || null;
         switch (header) {
           case 'name':
+          case 'full_name':
+          case 'first_name':
             lead.name = value;
             break;
           case 'phone':
+          case 'phone_number':
+          case 'mobile':
             lead.phone = value;
             break;
           case 'email':
+          case 'email_address':
             lead.email = value;
             break;
           case 'company_name':
           case 'company':
+          case 'organization':
             lead.company_name = value;
             break;
           case 'job_title':
           case 'title':
+          case 'position':
             lead.job_title = value;
             break;
           case 'source_url':
           case 'url':
+          case 'website':
             lead.source_url = value;
             break;
           case 'source_platform':
           case 'platform':
+          case 'source':
             lead.source_platform = value;
             break;
         }
@@ -134,26 +158,34 @@ export function EditCampaign() {
 
       if (lead.name || lead.phone || lead.email) {
         leads.push(lead);
+      } else {
+        errors.push(`Row ${i + 1}: Missing required data (name, phone, or email)`);
       }
     }
 
-    return leads;
+    return { leads, errors };
   };
 
   const handleFileUpload = async () => {
     if (!csvFile || !user || !campaign) return;
 
     setUploadLoading(true);
+    setUploadResult(null);
+
     try {
       const csvText = await csvFile.text();
-      const leads = parseCSV(csvText);
+      const { leads, errors } = parseCSV(csvText);
 
       if (leads.length === 0) {
-        alert('No valid leads found in CSV file. Please check the format.');
+        setUploadResult({
+          success: false,
+          message: 'No valid leads found in CSV file.',
+          errors: ['Please ensure your CSV has columns for name, phone, or email', ...errors]
+        });
         return;
       }
 
-      // Insert leads into uploaded_leads table
+      // Always save leads to database first
       const leadsToInsert = leads.map(lead => ({
         user_id: user.id,
         campaign_id: campaign.id,
@@ -167,17 +199,57 @@ export function EditCampaign() {
         status: 'pending'
       }));
 
-      const { error } = await supabase
+      const { error: dbError } = await supabase
         .from('uploaded_leads')
         .insert(leadsToInsert);
 
-      if (error) throw error;
+      if (dbError) {
+        throw new Error(`Database error: ${dbError.message}`);
+      }
+
+      // Database save successful - now try N8N webhook (optional)
+      let webhookSuccess = false;
+      let webhookError = null;
+
+      try {
+        const formData = new FormData();
+        formData.append('user_id', user.id);
+        formData.append('campaign', JSON.stringify(campaign));
+        formData.append('csv', csvFile);
+
+        const response = await fetch('https://mazirhx.app.n8n.cloud/webhook/start-campaign-upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          webhookSuccess = true;
+        } else {
+          webhookError = `Webhook failed with status: ${response.status}`;
+        }
+      } catch (error) {
+        webhookError = `Webhook error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      }
+
+      // Set success result with webhook status
+      setUploadResult({
+        success: true,
+        message: `Successfully uploaded ${leads.length} leads to the database!`,
+        leadsCount: leads.length,
+        errors: webhookSuccess ? [] : [
+          'Note: Leads saved to database successfully, but automation webhook failed.',
+          webhookError || 'Webhook connection failed'
+        ]
+      });
 
       setCsvFile(null);
-      alert(`Successfully uploaded ${leads.length} leads to the database!`);
     } catch (error) {
       console.error('Error uploading CSV:', error);
-      alert('Error uploading CSV. Please try again.');
+      setUploadResult({
+        success: false,
+        message: 'Failed to upload leads to database.',
+        errors: [error instanceof Error ? error.message : 'Unknown error occurred']
+      });
     } finally {
       setUploadLoading(false);
     }
@@ -188,6 +260,10 @@ export function EditCampaign() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const clearUploadResult = () => {
+    setUploadResult(null);
   };
 
   if (loading) {
@@ -258,6 +334,56 @@ export function EditCampaign() {
         </div>
       </div>
 
+      {/* Upload Result Message */}
+      {uploadResult && (
+        <div className={`rounded-lg border p-4 ${
+          uploadResult.success 
+            ? 'bg-green-50 border-green-200' 
+            : 'bg-red-50 border-red-200'
+        }`}>
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              {uploadResult.success ? (
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              ) : (
+                <XCircle className="h-5 w-5 text-red-600" />
+              )}
+            </div>
+            <div className="ml-3 flex-1">
+              <h3 className={`text-sm font-medium ${
+                uploadResult.success ? 'text-green-800' : 'text-red-800'
+              }`}>
+                {uploadResult.message}
+              </h3>
+              {uploadResult.leadsCount && (
+                <p className="text-sm text-green-700 mt-1">
+                  {uploadResult.leadsCount} leads have been added to your database and are ready for outreach.
+                </p>
+              )}
+              {uploadResult.errors && uploadResult.errors.length > 0 && (
+                <div className="mt-2">
+                  <div className="flex items-center">
+                    <AlertCircle className="h-4 w-4 text-yellow-600 mr-1" />
+                    <span className="text-sm font-medium text-yellow-800">Additional Information:</span>
+                  </div>
+                  <ul className="mt-1 text-sm text-yellow-700 list-disc list-inside">
+                    {uploadResult.errors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={clearUploadResult}
+              className="flex-shrink-0 ml-3 text-gray-400 hover:text-gray-600"
+            >
+              <XCircle className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="border-b border-gray-200">
@@ -280,7 +406,7 @@ export function EditCampaign() {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              Leads
+              Upload Leads
             </button>
             <button
               onClick={() => setActiveTab('chat')}
@@ -389,7 +515,7 @@ export function EditCampaign() {
             </form>
           )}
 
-          {/* Leads Tab */}
+          {/* Upload Leads Tab */}
           {activeTab === 'leads' && (
             <div className="space-y-6">
               <div className="text-center py-12">
@@ -398,14 +524,17 @@ export function EditCampaign() {
                   Upload CSV File
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Upload a CSV file with your leads data. Expected columns: name, phone, email, company_name, job_title, source_url, source_platform
+                  Upload a CSV file with your leads data. Supported columns: name, phone, email, company_name, job_title, source_url, source_platform
                 </p>
                 
                 <div className="max-w-md mx-auto space-y-4">
                   <input
                     type="file"
                     accept=".csv"
-                    onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                    onChange={(e) => {
+                      setCsvFile(e.target.files?.[0] || null);
+                      setUploadResult(null); // Clear previous results
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   
@@ -414,13 +543,22 @@ export function EditCampaign() {
                     disabled={!csvFile || uploadLoading}
                     className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {uploadLoading ? 'Uploading...' : 'Upload CSV File'}
+                    {uploadLoading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Uploading...
+                      </div>
+                    ) : (
+                      'Upload CSV File'
+                    )}
                   </button>
                 </div>
 
-                <p className="text-xs text-gray-500 mt-4">
-                  CSV files only. Make sure to include columns for name, phone, and email.
-                </p>
+                <div className="text-xs text-gray-500 mt-4 space-y-1">
+                  <p>• CSV files only with comma-separated values</p>
+                  <p>• First row should contain column headers</p>
+                  <p>• At least one of: name, phone, or email is required per row</p>
+                </div>
               </div>
             </div>
           )}
