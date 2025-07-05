@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Crown, Star, Zap } from 'lucide-react';
 
 export function Auth() {
   const { user, signIn, signUp, loading } = useAuth();
@@ -46,27 +46,52 @@ export function Auth() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black">
+        <div className="relative">
+          <div className="animate-spin rounded-full h-32 w-32 border-4 border-transparent border-t-yellow-400 border-r-yellow-500 border-b-yellow-600"></div>
+          <Crown className="absolute inset-0 m-auto h-8 w-8 text-yellow-400" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black py-12 px-4 sm:px-6 lg:px-8">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-yellow-400/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-yellow-600/5 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="max-w-md w-full space-y-8 relative z-10">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-blue-600 rounded-xl flex items-center justify-center">
-            <Mail className="h-6 w-6 text-white" />
+          <div className="mx-auto h-16 w-16 gold-gradient rounded-xl flex items-center justify-center shadow-2xl mb-6">
+            <Crown className="h-8 w-8 text-black" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            {isSignUp ? 'Create your account' : 'Welcome back'}
+          <h2 className="mt-6 text-4xl font-bold gold-text-gradient">
+            {isSignUp ? 'Join the Elite' : 'Welcome Back'}
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-400">
             {isSignUp
-              ? 'Start your cold outreach journey'
-              : 'Sign in to your account'}
+              ? 'Start your premium outreach journey'
+              : 'Access your elite dashboard'}
           </p>
+          
+          {/* Premium features showcase */}
+          <div className="mt-6 flex justify-center space-x-6">
+            <div className="flex items-center text-xs text-gray-400">
+              <Star className="h-3 w-3 text-yellow-400 mr-1" />
+              Premium AI
+            </div>
+            <div className="flex items-center text-xs text-gray-400">
+              <Zap className="h-3 w-3 text-yellow-400 mr-1" />
+              Elite Results
+            </div>
+            <div className="flex items-center text-xs text-gray-400">
+              <Crown className="h-3 w-3 text-yellow-400 mr-1" />
+              VIP Support
+            </div>
+          </div>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -78,7 +103,7 @@ export function Auth() {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
+                    <User className="h-5 w-5 text-yellow-400" />
                   </div>
                   <input
                     id="fullName"
@@ -87,7 +112,7 @@ export function Auth() {
                     required={isSignUp}
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:z-10 sm:text-sm"
+                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-yellow-400/30 placeholder-gray-500 text-gray-200 rounded-lg bg-black/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent focus:z-10 sm:text-sm"
                     placeholder="Full Name"
                   />
                 </div>
@@ -100,7 +125,7 @@ export function Auth() {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-yellow-400" />
                 </div>
                 <input
                   id="email"
@@ -109,7 +134,7 @@ export function Auth() {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-yellow-400/30 placeholder-gray-500 text-gray-200 rounded-lg bg-black/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent focus:z-10 sm:text-sm"
                   placeholder="Email address"
                 />
               </div>
@@ -121,7 +146,7 @@ export function Auth() {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-yellow-400" />
                 </div>
                 <input
                   id="password"
@@ -130,14 +155,14 @@ export function Auth() {
                   required
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-yellow-400/30 placeholder-gray-500 text-gray-200 rounded-lg bg-black/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent focus:z-10 sm:text-sm"
                   placeholder="Password"
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-yellow-400 hover:text-yellow-300"
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5" />
@@ -151,7 +176,7 @@ export function Auth() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm backdrop-blur-sm">
               {error}
             </div>
           )}
@@ -160,14 +185,20 @@ export function Auth() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-black gold-gradient hover-gold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
             >
               {isLoading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
               ) : isSignUp ? (
-                'Create Account'
+                <>
+                  <Crown className="h-4 w-4 mr-2" />
+                  Join Elite
+                </>
               ) : (
-                'Sign In'
+                <>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Access Dashboard
+                </>
               )}
             </button>
           </div>
@@ -176,11 +207,11 @@ export function Auth() {
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-blue-600 hover:text-blue-500"
+              className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors"
             >
               {isSignUp
-                ? 'Already have an account? Sign in'
-                : "Don't have an account? Sign up"}
+                ? 'Already elite? Sign in'
+                : "Ready to join the elite? Sign up"}
             </button>
           </div>
         </form>
