@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   Crown,
+  Search,
 } from 'lucide-react';
 
 const navItems = [
@@ -19,6 +20,7 @@ const navItems = [
   { icon: Target, label: 'Campaigns', path: '/campaigns' },
   { icon: Users, label: 'Leads Tracker', path: '/leads' },
   { icon: Calendar, label: 'Booked Leads', path: '/booked' },
+  { icon: Search, label: 'Targeting', path: '/targeting' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 

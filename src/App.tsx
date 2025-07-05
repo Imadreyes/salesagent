@@ -12,6 +12,7 @@ import { EditCampaign } from './components/EditCampaign';
 import { SequenceEditorChat } from './components/SequenceEditorChat';
 import { AdminPanel } from './components/AdminPanel';
 import { Settings } from './components/Settings';
+import { Targeting } from './components/Targeting';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
                 <Route path="campaigns/:id/chat" element={<SequenceEditorChat />} />
                 <Route path="leads" element={<LeadsTracker />} />
                 <Route path="booked" element={<BookedLeads />} />
+                <Route path="targeting" element={<Targeting />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="admin" element={<AdminPanel />} />
               </Route>
