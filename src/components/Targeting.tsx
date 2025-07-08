@@ -83,7 +83,7 @@ export function Targeting() {
           <h1 className={`text-4xl font-bold ${
             theme === 'gold' ? 'gold-text-gradient' : 'text-gray-900'
           }`}>
-            {theme === 'gold' ? 'Elite Targeting' : 'Smart Targeting'}
+            {theme === 'gold' ? 'Elite New Leads' : 'Smart New Leads'}
           </h1>
         </div>
         <p className={`text-xl max-w-3xl mx-auto ${
@@ -218,7 +218,7 @@ export function Targeting() {
         <h2 className={`text-2xl font-bold text-center mb-8 ${
           theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
         }`}>
-          How Elite Targeting Works
+          How Elite New Leads Works
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

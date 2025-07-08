@@ -22,7 +22,7 @@ const navItems = [
   { icon: Target, label: 'Campaigns', path: '/campaigns' },
   { icon: Activity, label: 'Performance', path: '/leads' },
   { icon: Calendar, label: 'Inbox', path: '/booked' },
-  { icon: Search, label: 'Targeting', path: '/targeting' },
+  { icon: Search, label: 'New Leads', path: '/targeting' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
@@ -50,9 +50,15 @@ export function Layout() {
               : 'border-t-blue-600 border-r-blue-500 border-b-blue-400'
           }`}></div>
           {theme === 'gold' ? (
-            <Crown className="absolute inset-0 m-auto h-8 w-8 text-yellow-400" />
+            <>
+              <Activity className="h-6 w-6 text-yellow-400" />
+              <h1 className="text-xl font-bold gold-text-gradient">Outreach Pro</h1>
+            </>
           ) : (
-            <Zap className="absolute inset-0 m-auto h-8 w-8 text-blue-600" />
+            <>
+              <Activity className="h-6 w-6 text-blue-600" />
+              <h1 className="text-xl font-bold text-gray-900">Outreach Pro</h1>
+            </>
           )}
         </div>
       </div>
