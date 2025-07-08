@@ -270,215 +270,213 @@ export function AITrainer({ campaignId }: AITrainerProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="relative">
-          <div className={`animate-spin rounded-full h-12 w-12 border-4 border-transparent ${
-            theme === 'gold'
-              ? 'border-t-yellow-400 border-r-yellow-500'
-              : 'border-t-blue-600 border-r-blue-500'
-          }`}></div>
-          {theme === 'gold' ? (
-            <Crown className="absolute inset-0 m-auto h-4 w-4 text-yellow-400" />
-          ) : (
-            <Zap className="absolute inset-0 m-auto h-4 w-4 text-blue-600" />
-          )}
+      <>
+        <div className="flex items-center justify-center h-64">
+          <div className="relative">
+            <div className={`animate-spin rounded-full h-12 w-12 border-4 border-transparent ${
+              theme === 'gold'
+                ? 'border-t-yellow-400 border-r-yellow-500'
+                : 'border-t-blue-600 border-r-blue-500'
+            }`}></div>
+            {theme === 'gold' ? (
+              <Crown className="absolute inset-0 m-auto h-4 w-4 text-yellow-400" />
+            ) : (
+              <Zap className="absolute inset-0 m-auto h-4 w-4 text-blue-600" />
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Test AI Training Modal */}
-      {showTestModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className={`w-full max-w-md rounded-xl shadow-2xl ${
-            theme === 'gold' ? 'black-card gold-border' : 'bg-white border border-gray-200'
-          }`}>
-            {/* Header */}
-            <div className={`flex items-center justify-between p-6 border-b ${
-              theme === 'gold' ? 'border-yellow-400/20' : 'border-gray-200'
+        {/* Test AI Training Modal */}
+        {showTestModal && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className={`w-full max-w-md rounded-xl shadow-2xl ${
+              theme === 'gold' ? 'black-card gold-border' : 'bg-white border border-gray-200'
             }`}>
-              <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-lg ${
-                  theme === 'gold' ? 'gold-gradient' : 'bg-blue-100'
-                }`}>
-                  <TestTube className={`h-5 w-5 ${
-                    theme === 'gold' ? 'text-black' : 'text-blue-600'
-                  }`} />
-                </div>
-                <div>
-                  <h3 className={`text-lg font-semibold ${
-                    theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+              {/* Header */}
+              <div className={`flex items-center justify-between p-6 border-b ${
+                theme === 'gold' ? 'border-yellow-400/20' : 'border-gray-200'
+              }`}>
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-lg ${
+                    theme === 'gold' ? 'gold-gradient' : 'bg-blue-100'
                   }`}>
-                    Test AI Training
-                  </h3>
-                  <p className={`text-sm ${
-                    theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    Test your AI with real interactions
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={closeTestModal}
-                className={`p-2 rounded-lg transition-colors ${
-                  theme === 'gold'
-                    ? 'text-gray-400 hover:bg-gray-800'
-                    : 'text-gray-500 hover:bg-gray-100'
-                }`}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 space-y-4">
-              {/* Test Result */}
-              {testResult && (
-                <div className={`rounded-lg border p-4 ${
-                  testResult.success 
-                    ? theme === 'gold'
-                      ? 'bg-green-500/10 border-green-500/30 text-green-400'
-                      : 'bg-green-50 border-green-200 text-green-800'
-                    : theme === 'gold'
-                      ? 'bg-red-500/10 border-red-500/30 text-red-400'
-                      : 'bg-red-50 border-red-200 text-red-800'
-                }`}>
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                      {testResult.success ? (
-                        <CheckCircle className="h-5 w-5" />
-                      ) : (
-                        <XCircle className="h-5 w-5" />
-                      )}
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium">{testResult.message}</p>
-                    </div>
+                    <TestTube className={`h-5 w-5 ${
+                      theme === 'gold' ? 'text-black' : 'text-blue-600'
+                    }`} />
+                  </div>
+                  <div>
+                    <h3 className={`text-lg font-semibold ${
+                      theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+                    }`}>
+                      Test AI Training
+                    </h3>
+                    <p className={`text-sm ${
+                      theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      Test your AI with real interactions
+                    </p>
                   </div>
                 </div>
-              )}
-
-              {/* Phone Number Input */}
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${
-                  theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Test Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={testData.phone}
-                  onChange={(e) => setTestData({ ...testData, phone: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                <button
+                  onClick={closeTestModal}
+                  className={`p-2 rounded-lg transition-colors ${
                     theme === 'gold'
-                      ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
-                      : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
+                      ? 'text-gray-400 hover:bg-gray-800'
+                      : 'text-gray-500 hover:bg-gray-100'
                   }`}
-                  placeholder="+1234567890"
-                />
-                <p className={`text-xs mt-1 ${
-                  theme === 'gold' ? 'text-gray-500' : 'text-gray-500'
-                }`}>
-                  Enter your phone number to receive the test
-                </p>
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
 
-              {/* Channel Selection */}
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${
-                  theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Test Channel
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { key: 'call', label: 'Call', icon: Phone },
-                    { key: 'sms', label: 'SMS', icon: MessageSquare },
-                    { key: 'whatsapp', label: 'WhatsApp', icon: MessageSquare }
-                  ].map((channel) => {
-                    const Icon = channel.icon;
-                    const isSelected = testData.channel === channel.key;
-                    return (
-                      <button
-                        key={channel.key}
-                        onClick={() => setTestData({ ...testData, channel: channel.key as any })}
-                        className={`p-3 rounded-lg border-2 transition-all ${
-                          isSelected
-                            ? theme === 'gold'
-                              ? 'border-yellow-400 bg-yellow-400/10'
-                              : 'border-blue-500 bg-blue-50'
-                            : theme === 'gold'
-                              ? 'border-gray-600 hover:border-gray-500'
-                              : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex flex-col items-center space-y-1">
-                          <Icon className={`h-5 w-5 ${
+              {/* Content */}
+              <div className="p-6 space-y-4">
+                {/* Test Result */}
+                {testResult && (
+                  <div className={`rounded-lg border p-4 ${
+                    testResult.success 
+                      ? theme === 'gold'
+                        ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                        : 'bg-green-50 border-green-200 text-green-800'
+                      : theme === 'gold'
+                        ? 'bg-red-500/10 border-red-500/30 text-red-400'
+                        : 'bg-red-50 border-red-200 text-red-800'
+                  }`}>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        {testResult.success ? (
+                          <CheckCircle className="h-5 w-5" />
+                        ) : (
+                          <XCircle className="h-5 w-5" />
+                        )}
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium">{testResult.message}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Phone Number Input */}
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Test Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={testData.phone}
+                    onChange={(e) => setTestData({ ...testData, phone: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      theme === 'gold'
+                        ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
+                        : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
+                    }`}
+                    placeholder="+1234567890"
+                  />
+                  <p className={`text-xs mt-1 ${
+                    theme === 'gold' ? 'text-gray-500' : 'text-gray-500'
+                  }`}>
+                    Enter your phone number to receive the test
+                  </p>
+                </div>
+
+                {/* Channel Selection */}
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Test Channel
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { key: 'call', label: 'Call', icon: Phone },
+                      { key: 'sms', label: 'SMS', icon: MessageSquare },
+                      { key: 'whatsapp', label: 'WhatsApp', icon: MessageSquare }
+                    ].map((channel) => {
+                      const Icon = channel.icon;
+                      const isSelected = testData.channel === channel.key;
+                      return (
+                        <button
+                          key={channel.key}
+                          onClick={() => setTestData({ ...testData, channel: channel.key as any })}
+                          className={`p-3 rounded-lg border-2 transition-all ${
                             isSelected
                               ? theme === 'gold' ? 'text-yellow-400' : 'text-blue-600'
                               : theme === 'gold' ? 'text-gray-400' : 'text-gray-500'
-                          }`} />
-                          <span className={`text-xs font-medium ${
-                            isSelected
-                              ? theme === 'gold' ? 'text-yellow-400' : 'text-blue-600'
-                              : theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
-                          }`}>
-                            {channel.label}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
+                          }`}
+                        >
+                          <div className="flex flex-col items-center space-y-1">
+                            <Icon className={`h-5 w-5 ${
+                              isSelected
+                                ? theme === 'gold' ? 'text-yellow-400' : 'text-blue-600'
+                                : theme === 'gold' ? 'text-gray-400' : 'text-gray-500'
+                            }`} />
+                            <span className={`text-xs font-medium ${
+                              isSelected
+                                ? theme === 'gold' ? 'text-yellow-400' : 'text-blue-600'
+                                : theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              {channel.label}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={closeTestModal}
-                  className={`flex-1 px-4 py-2 text-sm rounded-lg transition-colors ${
-                    theme === 'gold'
-                      ? 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700'
-                      : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
-                  }`}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleTestAI}
-                  disabled={testing || !testData.phone.trim()}
-                  className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    theme === 'gold'
-                      ? 'gold-gradient text-black hover-gold'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {testing ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                      Testing...
-                    </div>
-                  ) : (
-                    `Start Test ${testData.channel === 'call' ? 'Call' : testData.channel.toUpperCase()}`
-                  )}
-                </button>
-              </div>
+                {/* Action Buttons */}
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    onClick={closeTestModal}
+                    className={`flex-1 px-4 py-2 text-sm rounded-lg transition-colors ${
+                      theme === 'gold'
+                        ? 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700'
+                        : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleTestAI}
+                    disabled={testing || !testData.phone.trim()}
+                    className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      theme === 'gold'
+                        ? 'gold-gradient text-black hover-gold'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {testing ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                        Testing...
+                      </div>
+                    ) : (
+                      `Start Test ${testData.channel === 'call' ? 'Call' : testData.channel.toUpperCase()}`
+                    )}
+                  </button>
+                </div>
 
-              {/* Info */}
-              <div className={`p-3 rounded-lg text-xs ${
-                theme === 'gold'
-                  ? 'bg-yellow-400/10 border border-yellow-400/20 text-gray-400'
-                  : 'bg-blue-50 border border-blue-200 text-blue-600'
-              }`}>
-                <p className="font-medium mb-1">💡 Testing Tips:</p>
-                <ul className="space-y-1">
-                  <li>• The AI will use your training resources for context</li>
-                  <li>• Test different scenarios to improve training</li>
-                  <li>• Make sure your phone can receive calls/texts</li>
-                </ul>
+                {/* Info */}
+                <div className={`p-3 rounded-lg text-xs ${
+                  theme === 'gold'
+                    ? 'bg-yellow-400/10 border border-yellow-400/20 text-gray-400'
+                    : 'bg-blue-50 border border-blue-200 text-blue-600'
+                }`}>
+                  <p className="font-medium mb-1">💡 Testing Tips:</p>
+                  <ul className="space-y-1">
+                    <li>• The AI will use your training resources for context</li>
+                    <li>• Test different scenarios to improve training</li>
+                    <li>• Make sure your phone can receive calls/texts</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </>
     );
   }
 
