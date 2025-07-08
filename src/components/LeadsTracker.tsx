@@ -230,7 +230,7 @@ export function LeadsTracker() {
         .select(`
           *,
           campaigns!inner(offer),
-          uploaded_leads!inner(name)
+          leads!inner(name)
         `)
         .gte('executed_at', oneHourAgo.toISOString())
         .order('executed_at', { ascending: false })
@@ -241,7 +241,7 @@ export function LeadsTracker() {
           id: activity.id,
           type: activity.type as any,
           campaign_name: (activity.campaigns as any)?.offer || 'Unknown Campaign',
-          lead_name: (activity.uploaded_leads as any)?.name || 'Unknown Lead',
+          lead_name: (activity.leads as any)?.name || 'Unknown Lead',
           timestamp: activity.executed_at,
           status: activity.status === 'completed' ? 'success' : activity.status === 'failed' ? 'failed' : 'pending',
           message: activity.notes,
