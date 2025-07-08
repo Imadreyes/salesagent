@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Save, FileText, Link, Tag, Trash2 } from 'lucide-react';
+import { Plus, Save, FileText, Link, Tag, Trash2, TestTube, Phone, MessageSquare, Play } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface TrainingResource {
   id: string;
@@ -16,11 +17,17 @@ interface AITrainerProps {
 }
 
 export function AITrainer({ campaignId }: AITrainerProps) {
+  const { user } = useAuth();
   const { theme } = useTheme();
   const [resources, setResources] = useState<TrainingResource[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showTestModal, setShowTestModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testPhone, setTestPhone] = useState('');
+  const [testType, setTestType] = useState<'call' | 'sms' | 'whatsapp'>('call');
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [formData, setFormData] = useState({
     resource_type: 'note',
     content: '',
@@ -99,6 +106,53 @@ export function AITrainer({ campaignId }: AITrainerProps) {
     }
   };
 
+  const handleTestCampaign = async () => {
+    if (!testPhone.trim()) {
+      setTestResult({
+        success: false,
+        message: 'Please enter a phone number to test'
+      });
+      return;
+    }
+
+    setTesting(true);
+    setTestResult(null);
+
+    try {
+      const response = await fetch('https://mazirhx.app.n8n.cloud/webhook/test-campaign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+          campaign_id: campaignId,
+          test_phone: testPhone,
+          test_type: testType,
+          trigger_type: 'manual_test',
+        }),
+      });
+
+      if (response.ok) {
+        setTestResult({
+          success: true,
+          message: `Test ${testType} initiated successfully! You should receive a ${testType} shortly.`
+        });
+        setShowTestModal(false);
+        setTestPhone('');
+      } else {
+        throw new Error('Failed to initiate test');
+      }
+    } catch (error) {
+      setTestResult({
+        success: false,
+        message: `Failed to initiate test ${testType}. Please try again.`
+      });
+    } finally {
+      setTesting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -134,6 +188,71 @@ export function AITrainer({ campaignId }: AITrainerProps) {
           Add Resource
         </button>
       </div>
+      
+      {/* Test AI Button */}
+      <div className={`p-4 rounded-lg border ${
+        theme === 'gold'
+          ? 'border-yellow-400/20 bg-yellow-400/5'
+          : 'border-blue-200 bg-blue-50'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className={`text-sm font-medium ${
+              theme === 'gold' ? 'text-yellow-400' : 'text-blue-700'
+            }`}>
+              Test Your AI Assistant
+            </h4>
+            <p className={`text-xs mt-1 ${
+              theme === 'gold' ? 'text-gray-400' : 'text-blue-600'
+            }`}>
+              Test your AI caller with your training data before going live
+            </p>
+          </div>
+          <button
+            onClick={() => setShowTestModal(true)}
+            className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              theme === 'gold'
+                ? 'gold-gradient text-black hover-gold'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            <TestTube className="h-4 w-4 mr-2" />
+            Test AI
+          </button>
+        </div>
+      </div>
+
+      {/* Test Result */}
+      {testResult && (
+        <div className={`rounded-lg border p-4 ${
+          testResult.success 
+            ? theme === 'gold'
+              ? 'bg-green-500/10 border-green-500/30 text-green-400'
+              : 'bg-green-50 border-green-200 text-green-800'
+            : theme === 'gold'
+              ? 'bg-red-500/10 border-red-500/30 text-red-400'
+              : 'bg-red-50 border-red-200 text-red-800'
+        }`}>
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              {testResult.success ? (
+                <TestTube className="h-5 w-5" />
+              ) : (
+                <TestTube className="h-5 w-5" />
+              )}
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">{testResult.message}</p>
+            </div>
+            <button
+              onClick={() => setTestResult(null)}
+              className="ml-auto text-current hover:opacity-70"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       {resources.length === 0 ? (
         <div className={`text-center py-8 border-2 border-dashed rounded-lg ${
@@ -342,6 +461,148 @@ export function AITrainer({ campaignId }: AITrainerProps) {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Test Modal */}
+      {showTestModal && (
+        <div className={`fixed inset-0 z-50 overflow-y-auto ${
+          theme === 'gold' ? 'bg-black/75' : 'bg-gray-900/50'
+        }`}>
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className={`w-full max-w-md rounded-xl shadow-2xl ${
+              theme === 'gold' ? 'black-card gold-border' : 'bg-white border border-gray-200'
+            }`}>
+              <div className={`p-6 border-b ${
+                theme === 'gold' ? 'border-yellow-400/20' : 'border-gray-200'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <h3 className={`text-lg font-semibold ${
+                    theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+                  }`}>
+                    Test AI Assistant
+                  </h3>
+                  <button
+                    onClick={() => setShowTestModal(false)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      theme === 'gold'
+                        ? 'text-gray-400 hover:bg-gray-800'
+                        : 'text-gray-500 hover:bg-gray-100'
+                    }`}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Test Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={testPhone}
+                    onChange={(e) => setTestPhone(e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      theme === 'gold'
+                        ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
+                        : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
+                    }`}
+                    placeholder="+1234567890"
+                  />
+                  <p className={`text-xs mt-1 ${
+                    theme === 'gold' ? 'text-gray-500' : 'text-gray-500'
+                  }`}>
+                    Enter your phone number to receive a test
+                  </p>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Test Type
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { key: 'call', label: 'Call', icon: Phone },
+                      { key: 'sms', label: 'SMS', icon: MessageSquare },
+                      { key: 'whatsapp', label: 'WhatsApp', icon: MessageSquare }
+                    ].map((type) => {
+                      const Icon = type.icon;
+                      return (
+                        <button
+                          key={type.key}
+                          onClick={() => setTestType(type.key as any)}
+                          className={`p-3 rounded-lg border-2 transition-all ${
+                            testType === type.key
+                              ? theme === 'gold'
+                                ? 'border-yellow-400 bg-yellow-400/10'
+                                : 'border-blue-500 bg-blue-50'
+                              : theme === 'gold'
+                                ? 'border-gray-600 hover:border-gray-500'
+                                : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex flex-col items-center space-y-1">
+                            <Icon className={`h-4 w-4 ${
+                              testType === type.key
+                                ? theme === 'gold' ? 'text-yellow-400' : 'text-blue-600'
+                                : theme === 'gold' ? 'text-gray-400' : 'text-gray-500'
+                            }`} />
+                            <span className={`text-xs font-medium ${
+                              testType === type.key
+                                ? theme === 'gold' ? 'text-yellow-400' : 'text-blue-600'
+                                : theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              {type.label}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    onClick={() => setShowTestModal(false)}
+                    className={`flex-1 px-4 py-2 text-sm rounded-lg transition-colors ${
+                      theme === 'gold'
+                        ? 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700'
+                        : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleTestCampaign}
+                    disabled={testing || !testPhone.trim()}
+                    className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      theme === 'gold'
+                        ? 'gold-gradient text-black hover-gold'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {testing ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                        Testing...
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center">
+                        <Play className="h-4 w-4 mr-2" />
+                        Start Test
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
