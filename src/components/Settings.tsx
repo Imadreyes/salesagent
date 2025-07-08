@@ -16,7 +16,6 @@ import {
 export function Settings() {
   const { user, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing'>('profile');
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'channels' | 'billing'>('profile');
 
   const tabs = [
