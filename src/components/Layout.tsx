@@ -18,8 +18,8 @@ import {
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Target, label: 'Campaigns', path: '/campaigns' },
-  { icon: Users, label: 'Leads Tracker', path: '/leads' },
-  { icon: Calendar, label: 'Booked Leads', path: '/booked' },
+  { icon: Users, label: 'Campaign Performance', path: '/leads' },
+  { icon: Calendar, label: 'Inbox', path: '/booked' },
   { icon: Search, label: 'Targeting', path: '/targeting' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];

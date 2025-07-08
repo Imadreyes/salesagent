@@ -10,6 +10,7 @@ import { LeadsTracker } from './components/LeadsTracker';
 import { BookedLeads } from './components/BookedLeads';
 import { EditCampaign } from './components/EditCampaign';
 import { SequenceEditorChat } from './components/SequenceEditorChat';
+import { Inbox } from './components/Inbox';
 import { AdminPanel } from './components/AdminPanel';
 import { Settings } from './components/Settings';
 import { Targeting } from './components/Targeting';
@@ -30,7 +31,7 @@ function App() {
                 <Route path="campaigns/:id/edit" element={<EditCampaign />} />
                 <Route path="campaigns/:id/chat" element={<SequenceEditorChat />} />
                 <Route path="leads" element={<LeadsTracker />} />
-                <Route path="booked" element={<BookedLeads />} />
+                <Route path="booked" element={<Inbox />} />
                 <Route path="targeting" element={<Targeting />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="admin" element={<AdminPanel />} />

@@ -102,7 +102,7 @@ export function Targeting() {
             : 'border-blue-200 bg-blue-50 text-blue-700'
         }`}>
           <Clock className="h-5 w-5 mr-2" />
-          <span className="font-semibold">Coming Soon - Q2 2024</span>
+          <span className="font-semibold">Coming Soon</span>
         </div>
       </div>
 
