@@ -517,7 +517,6 @@ export function EditCampaign() {
               { key: 'details', label: 'Campaign Details' },
               { key: 'leads', label: 'Upload Leads' },
               { key: 'training', label: 'AI Training' },
-              { key: 'review', label: 'Campaign Review' },
               { key: 'analytics', label: 'Campaign Analytics' },
               { key: 'schedule', label: 'Schedule' }
             ].map((tab) => (

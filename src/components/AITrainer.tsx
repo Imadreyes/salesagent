@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { supabase } from '../lib/supabase';
-import { Plus, FileText, Link as LinkIcon, Upload, Trash2, Tag, Save, Crown, Zap } from 'lucide-react';
+import { Plus, FileText, Link as LinkIcon, Upload, Trash2, Tag, Save, Crown, Zap, CheckCircle, XCircle } from 'lucide-react';
 
 interface TrainingResource {
   id: string;
