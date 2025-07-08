@@ -3,8 +3,9 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { ArrowLeft, Save, Upload, MessageCircle, CheckCircle, XCircle, AlertCircle, Eye, ArrowRight, ArrowDown } from 'lucide-react';
-import { SequenceBuilder } from './SequenceBuilder';
 import { AITrainer } from './AITrainer';
+import { CampaignReview } from './CampaignReview';
+import { CampaignAnalytics } from './CampaignAnalytics';
 
 interface Campaign {
   id: string;
@@ -515,8 +516,9 @@ export function EditCampaign() {
             {[
               { key: 'details', label: 'Campaign Details' },
               { key: 'leads', label: 'Upload Leads' },
-              { key: 'sequence', label: 'Message Sequence' },
               { key: 'training', label: 'AI Training' },
+              { key: 'review', label: 'Campaign Review' },
+              { key: 'analytics', label: 'Campaign Analytics' },
               { key: 'schedule', label: 'Schedule' }
             ].map((tab) => (
               <button
@@ -826,14 +828,19 @@ export function EditCampaign() {
             </div>
           )}
 
-          {/* Message Sequence Tab */}
-          {activeTab === 'sequence' && campaign && (
-            <SequenceBuilder campaignId={campaign.id} />
-          )}
-
           {/* AI Training Tab */}
           {activeTab === 'training' && campaign && (
             <AITrainer campaignId={campaign.id} />
+          )}
+
+          {/* Campaign Review Tab */}
+          {activeTab === 'review' && campaign && (
+            <CampaignReview campaignId={campaign.id} />
+          )}
+
+          {/* Campaign Analytics Tab */}
+          {activeTab === 'analytics' && campaign && (
+            <CampaignAnalytics campaignId={campaign.id} />
           )}
 
           {/* Schedule Tab */}

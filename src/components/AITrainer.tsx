@@ -69,7 +69,12 @@ export function AITrainer({ campaignId }: AITrainerProps) {
     e.preventDefault();
     if (!user) return;
 
-    // Basic validation
+    console.log('Starting form submission...');
+    console.log('Form data:', formData);
+    console.log('User ID:', user.id);
+    console.log('Campaign ID:', campaignId);
+
+    // Enhanced validation
     if (!formData.title.trim()) {
       alert('Please enter a title');
       return;
@@ -87,6 +92,7 @@ export function AITrainer({ campaignId }: AITrainerProps) {
 
     setSaving(true);
     try {
+      console.log('Processing tags...');
       const tagsArray = formData.tags
         .split(',')
         .map(tag => tag.trim())
@@ -104,6 +110,8 @@ export function AITrainer({ campaignId }: AITrainerProps) {
 
       console.log('Inserting training resource:', resourceData);
 
+      // First, let's check if the table exists and we can connect
+      console.log('Attempting to insert into training_resources table...');
       const { data, error } = await supabase
         .from('training_resources')
         .insert([resourceData])
@@ -111,11 +119,15 @@ export function AITrainer({ campaignId }: AITrainerProps) {
 
       if (error) {
         console.error('Supabase error:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         throw error;
       }
 
       console.log('Successfully inserted:', data);
-
       // Trigger AI trainer webhook
       try {
         await fetch('https://mazirhx.app.n8n.cloud/webhook/ai-trainer', {
@@ -130,6 +142,7 @@ export function AITrainer({ campaignId }: AITrainerProps) {
           }),
         });
       } catch (webhookError) {
+        console.error('Webhook error:', webhookError);
         console.warn('Webhook failed, but resource saved:', webhookError);
       }
 
@@ -142,11 +155,16 @@ export function AITrainer({ campaignId }: AITrainerProps) {
       });
       setShowAddForm(false);
       fetchResources();
+      
+      // Show success message
+      alert('Training resource saved successfully!');
     } catch (error) {
       console.error('Error saving training resource:', error);
-      alert(`Failed to save training resource: ${error.message || 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to save training resource: ${errorMessage}`);
     } finally {
       setSaving(false);
+      console.log('Form submission completed');
     }
   };
 
