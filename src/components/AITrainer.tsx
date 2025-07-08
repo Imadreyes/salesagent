@@ -26,6 +26,11 @@ export function AITrainer({ campaignId }: AITrainerProps) {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadResult, setUploadResult] = useState<{
+    success: boolean;
+    message: string;
+    errors?: string[];
+  } | null>(null);
   const [formData, setFormData] = useState({
     resource_type: 'note' as 'note' | 'file' | 'link',
     title: '',
@@ -153,6 +158,9 @@ export function AITrainer({ campaignId }: AITrainerProps) {
         success: true,
         message: 'Training resource saved successfully!'
       });
+      
+      // Clear the success message after 3 seconds
+      setTimeout(() => setUploadResult(null), 3000);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       setUploadResult({
@@ -385,6 +393,41 @@ export function AITrainer({ campaignId }: AITrainerProps) {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Upload Result Message */}
+      {uploadResult && (
+        <div className={`p-4 rounded-lg border flex items-center ${
+          uploadResult.success
+            ? theme === 'gold'
+              ? 'border-green-400/20 bg-green-400/10 text-green-400'
+              : 'border-green-200 bg-green-50 text-green-800'
+            : theme === 'gold'
+              ? 'border-red-400/20 bg-red-400/10 text-red-400'
+              : 'border-red-200 bg-red-50 text-red-800'
+        }`}>
+          {uploadResult.success ? (
+            <CheckCircle className="h-5 w-5 mr-3 flex-shrink-0" />
+          ) : (
+            <XCircle className="h-5 w-5 mr-3 flex-shrink-0" />
+          )}
+          <div className="flex-1">
+            <p className="font-medium">{uploadResult.message}</p>
+            {uploadResult.errors && uploadResult.errors.length > 0 && (
+              <ul className="mt-2 text-sm list-disc list-inside">
+                {uploadResult.errors.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <button
+            onClick={() => setUploadResult(null)}
+            className="ml-3 text-current hover:opacity-70"
+          >
+            <XCircle className="h-4 w-4" />
+          </button>
         </div>
       )}
 
