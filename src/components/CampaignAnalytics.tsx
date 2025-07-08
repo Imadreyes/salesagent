@@ -14,7 +14,9 @@ import {
   Users,
   CheckCircle,
   ChevronDown,
-  Filter
+  Filter,
+  BarChart,
+  LineChart
 } from 'lucide-react';
 
 interface CampaignAnalyticsProps {
@@ -53,6 +55,7 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
 
   useEffect(() => {
     if (campaignId) {
@@ -115,14 +118,19 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
       const responseRate = totalOutbound > 0 ? (responsesReceived / totalOutbound) * 100 : 0;
 
       // Generate daily activity data
-      const daysToShow = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 
-                        timeRange === 'custom' && startDate && endDate ? 
-                        Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1 : 7;
+      let daysToShow = 7;
+      if (timeRange === '30d') {
+        daysToShow = 30;
+      } else if (timeRange === 'custom' && startDate && endDate) {
+        daysToShow = Math.min(Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1, 90);
+      } else if (timeRange === 'all') {
+        daysToShow = 30; // Limit to last 30 days for performance
+      }
       
       const dailyActivity = [];
       const baseDate = timeRange === 'custom' && startDate ? new Date(startDate) : now;
       
-      for (let i = Math.min(daysToShow - 1, 29); i >= 0; i--) {
+      for (let i = daysToShow - 1; i >= 0; i--) {
         const date = new Date();
         if (timeRange === 'custom' && startDate) {
           date.setTime(baseDate.getTime() + (daysToShow - 1 - i) * 24 * 60 * 60 * 1000);
@@ -423,119 +431,324 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
           ? 'border-yellow-400/20 bg-black/20'
           : 'border-gray-200 bg-gray-50'
       }`}>
-        <h4 className={`text-md font-semibold mb-4 ${
-          theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
-        }`}>
-          Daily Activity 
-          {timeRange === 'custom' && startDate && endDate 
-            ? ` (${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()})`
-            : timeRange === '7d' ? ' (Last 7 Days)' 
-            : timeRange === '30d' ? ' (Last 30 Days)'
-            : ' (All Time)'
-          }
-        </h4>
+        <div className="flex items-center justify-between mb-6">
+          <h4 className={`text-md font-semibold ${
+            theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+          }`}>
+            Daily Activity 
+            {timeRange === 'custom' && startDate && endDate 
+              ? ` (${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()})`
+              : timeRange === '7d' ? ' (Last 7 Days)' 
+              : timeRange === '30d' ? ' (Last 30 Days)'
+              : ' (All Time)'
+            }
+          </h4>
+          
+          {/* Chart Type Toggle */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setChartType('bar')}
+              className={`p-2 rounded-lg transition-colors ${
+                chartType === 'bar'
+                  ? theme === 'gold'
+                    ? 'gold-gradient text-black'
+                    : 'bg-blue-600 text-white'
+                  : theme === 'gold'
+                    ? 'text-gray-400 hover:bg-gray-800'
+                    : 'text-gray-600 hover:bg-gray-100'
+              }`}
+              title="Bar Chart"
+            >
+              <BarChart className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setChartType('line')}
+              className={`p-2 rounded-lg transition-colors ${
 
         <div className="space-y-4">
           {analytics.dailyActivity.map((day, index) => {
-            const total = day.calls + day.sms + day.whatsapp;
-            const date = new Date(day.date);
-            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-            const dayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-            return (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className={`text-sm font-medium ${
-                    theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    {dayName}, {dayDate}
-                  </span>
-                  <span className={`text-sm ${
-                    theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    {total} contacts
-                  </span>
-                </div>
-
-                <div className="flex space-x-1 h-6">
-                  {/* Calls */}
-                  {day.calls > 0 && (
-                    <div
-                      className={`rounded-sm ${
-                        theme === 'gold' ? 'bg-yellow-400' : 'bg-blue-500'
-                      }`}
-                      style={{
-                        width: `${(day.calls / maxDailyValue) * 100}%`,
-                        minWidth: day.calls > 0 ? '4px' : '0'
-                      }}
-                      title={`${day.calls} calls`}
-                    />
-                  )}
+        {/* Chart Container */}
+        <div className="relative">
+          {chartType === 'bar' ? (
+            /* Bar Chart */
+            <div className="space-y-1">
+              <div className="flex justify-between items-end h-64 px-2">
+                {analytics.dailyActivity.map((day, index) => {
+                  const total = day.calls + day.sms + day.whatsapp;
+                  const date = new Date(day.date);
+                  const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                  const dayDate = date.toLocaleDateString('en-US', { day: 'numeric' });
+                  const maxHeight = 200; // Max height in pixels
                   
-                  {/* SMS */}
-                  {day.sms > 0 && (
-                    <div
-                      className={`rounded-sm ${
-                        theme === 'gold' ? 'bg-yellow-600' : 'bg-green-500'
-                      }`}
-                      style={{
-                        width: `${(day.sms / maxDailyValue) * 100}%`,
-                        minWidth: day.sms > 0 ? '4px' : '0'
-                      }}
-                      title={`${day.sms} SMS`}
-                    />
-                  )}
-                  
-                  {/* WhatsApp */}
-                  {day.whatsapp > 0 && (
-                    <div
-                      className={`rounded-sm ${
-                        theme === 'gold' ? 'bg-orange-400' : 'bg-purple-500'
-                      }`}
-                      style={{
-                        width: `${(day.whatsapp / maxDailyValue) * 100}%`,
-                        minWidth: day.whatsapp > 0 ? '4px' : '0'
-                      }}
-                      title={`${day.whatsapp} WhatsApp`}
-                    />
-                  )}
-                  
-                  {total === 0 && (
-                    <div className={`w-full h-full rounded-sm ${
-                      theme === 'gold' ? 'bg-gray-700' : 'bg-gray-200'
-                    }`} />
-                  )}
-                </div>
-
-                <div className="flex space-x-4 text-xs">
-                  <span className={`flex items-center ${
-                    theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    <div className={`w-2 h-2 rounded-full mr-1 ${
-                      theme === 'gold' ? 'bg-yellow-400' : 'bg-blue-500'
-                    }`} />
-                    {day.calls} calls
-                  </span>
-                  <span className={`flex items-center ${
-                    theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    <div className={`w-2 h-2 rounded-full mr-1 ${
-                      theme === 'gold' ? 'bg-yellow-600' : 'bg-green-500'
-                    }`} />
-                    {day.sms} SMS
-                  </span>
-                  <span className={`flex items-center ${
-                    theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    <div className={`w-2 h-2 rounded-full mr-1 ${
-                      theme === 'gold' ? 'bg-orange-400' : 'bg-purple-500'
-                    }`} />
-                    {day.whatsapp} WhatsApp
-                  </span>
-                </div>
+                  return (
+                    <div key={index} className="flex flex-col items-center space-y-2 flex-1 max-w-16">
+                      {/* Bar */}
+                      <div className="relative flex flex-col justify-end h-48 w-8">
+                        {/* Calls */}
+                        {day.calls > 0 && (
+                          <div
+                            className={`w-full rounded-t-sm ${
+                              theme === 'gold' ? 'bg-yellow-400' : 'bg-blue-500'
+                            } transition-all duration-300 hover:opacity-80`}
+                            style={{
+                              height: `${(day.calls / maxDailyValue) * maxHeight}px`,
+                              minHeight: day.calls > 0 ? '2px' : '0'
+                            }}
+                            title={`${day.calls} calls`}
+                          />
+                        )}
+                        
+                        {/* SMS */}
+                        {day.sms > 0 && (
+                          <div
+                            className={`w-full ${
+                              day.calls === 0 ? 'rounded-t-sm' : ''
+                            } ${day.whatsapp === 0 ? 'rounded-b-sm' : ''} ${
+                              theme === 'gold' ? 'bg-yellow-600' : 'bg-green-500'
+                            } transition-all duration-300 hover:opacity-80`}
+                            style={{
+                              height: `${(day.sms / maxDailyValue) * maxHeight}px`,
+                              minHeight: day.sms > 0 ? '2px' : '0'
+                            }}
+                            title={`${day.sms} SMS`}
+                          />
+                        )}
+                        
+                        {/* WhatsApp */}
+                        {day.whatsapp > 0 && (
+                          <div
+                            className={`w-full rounded-b-sm ${
+                              theme === 'gold' ? 'bg-orange-400' : 'bg-purple-500'
+                            } transition-all duration-300 hover:opacity-80`}
+                            style={{
+                              height: `${(day.whatsapp / maxDailyValue) * maxHeight}px`,
+                              minHeight: day.whatsapp > 0 ? '2px' : '0'
+                            }}
+                            title={`${day.whatsapp} WhatsApp`}
+                          />
+                        )}
+                        
+                        {/* Empty state */}
+                        {total === 0 && (
+                          <div className={`w-full h-1 rounded-sm ${
+                            theme === 'gold' ? 'bg-gray-700' : 'bg-gray-200'
+                          }`} />
+                        )}
+                        
+                        {/* Total count label */}
+                        {total > 0 && (
+                          <div className={`absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium ${
+                            theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            {total}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Date label */}
+                      <div className="text-center">
+                        <div className={`text-xs font-medium ${
+                          theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          {dayName}
+                        </div>
+                        <div className={`text-xs ${
+                          theme === 'gold' ? 'text-gray-500' : 'text-gray-500'
+                        }`}>
+                          {dayDate}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ) : (
+            /* Line Chart */
+            <div className="relative h-64">
+              <svg className="w-full h-full" viewBox="0 0 800 200">
+                {/* Grid lines */}
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <line
+                    key={i}
+                    x1="40"
+                    y1={40 + (i * 32)}
+                    x2="760"
+                    y2={40 + (i * 32)}
+                    stroke={theme === 'gold' ? '#374151' : '#e5e7eb'}
+                    strokeWidth="1"
+                    opacity="0.5"
+                  />
+                ))}
+                
+                {/* Y-axis labels */}
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <text
+                    key={i}
+                    x="35"
+                    y={45 + (i * 32)}
+                    textAnchor="end"
+                    className={`text-xs ${theme === 'gold' ? 'fill-gray-400' : 'fill-gray-600'}`}
+                  >
+                    {Math.round((maxDailyValue / 4) * (4 - i))}
+                  </text>
+                ))}
+                
+                {/* Data lines */}
+                {analytics.dailyActivity.length > 1 && (
+                  <>
+                    {/* Calls line */}
+                    <polyline
+                      fill="none"
+                      stroke={theme === 'gold' ? '#facc15' : '#3b82f6'}
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      points={analytics.dailyActivity.map((day, index) => {
+                        const x = 40 + (index * (720 / (analytics.dailyActivity.length - 1)));
+                        const y = 168 - ((day.calls / maxDailyValue) * 128);
+                        return `${x},${y}`;
+                      }).join(' ')}
+                    />
+                    
+                    {/* SMS line */}
+                    <polyline
+                      fill="none"
+                      stroke={theme === 'gold' ? '#ca8a04' : '#22c55e'}
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      points={analytics.dailyActivity.map((day, index) => {
+                        const x = 40 + (index * (720 / (analytics.dailyActivity.length - 1)));
+                        const y = 168 - ((day.sms / maxDailyValue) * 128);
+                        return `${x},${y}`;
+                      }).join(' ')}
+                    />
+                    
+                    {/* WhatsApp line */}
+                    <polyline
+                      fill="none"
+                      stroke={theme === 'gold' ? '#fb923c' : '#a855f7'}
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      points={analytics.dailyActivity.map((day, index) => {
+                        const x = 40 + (index * (720 / (analytics.dailyActivity.length - 1)));
+                        const y = 168 - ((day.whatsapp / maxDailyValue) * 128);
+                        return `${x},${y}`;
+                      }).join(' ')}
+                    />
+                    
+                    {/* Data points */}
+                    {analytics.dailyActivity.map((day, index) => {
+                      const x = 40 + (index * (720 / (analytics.dailyActivity.length - 1)));
+                      const total = day.calls + day.sms + day.whatsapp;
+                      
+                      return (
+                        <g key={index}>
+                          {/* Calls point */}
+                          {day.calls > 0 && (
+                            <circle
+                              cx={x}
+                              cy={168 - ((day.calls / maxDailyValue) * 128)}
+                              r="4"
+                              fill={theme === 'gold' ? '#facc15' : '#3b82f6'}
+                              className="hover:r-6 transition-all cursor-pointer"
+                            >
+                              <title>{`${day.calls} calls`}</title>
+                            </circle>
+                          )}
+                          
+                          {/* SMS point */}
+                          {day.sms > 0 && (
+                            <circle
+                              cx={x}
+                              cy={168 - ((day.sms / maxDailyValue) * 128)}
+                              r="4"
+                              fill={theme === 'gold' ? '#ca8a04' : '#22c55e'}
+                              className="hover:r-6 transition-all cursor-pointer"
+                            >
+                              <title>{`${day.sms} SMS`}</title>
+                            </circle>
+                          )}
+                          
+                          {/* WhatsApp point */}
+                          {day.whatsapp > 0 && (
+                            <circle
+                              cx={x}
+                              cy={168 - ((day.whatsapp / maxDailyValue) * 128)}
+                              r="4"
+                              fill={theme === 'gold' ? '#fb923c' : '#a855f7'}
+                              className="hover:r-6 transition-all cursor-pointer"
+                            >
+                              <title>{`${day.whatsapp} WhatsApp`}</title>
+                            </circle>
+                          )}
+                        </g>
+                      );
+                    })}
+                  </>
+                )}
+                
+                {/* X-axis labels */}
+                {analytics.dailyActivity.map((day, index) => {
+                  const x = 40 + (index * (720 / Math.max(analytics.dailyActivity.length - 1, 1)));
+                  const date = new Date(day.date);
+                  const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                  const dayDate = date.toLocaleDateString('en-US', { day: 'numeric' });
+                  
+                  return (
+                    <g key={index}>
+                      <text
+                        x={x}
+                        y="190"
+                        textAnchor="middle"
+                        className={`text-xs ${theme === 'gold' ? 'fill-gray-400' : 'fill-gray-600'}`}
+                      >
+                        {dayName}
+                      </text>
+                      <text
+                        x={x}
+                        y="200"
+                        textAnchor="middle"
+                        className={`text-xs ${theme === 'gold' ? 'fill-gray-500' : 'fill-gray-500'}`}
+                      >
+                        {dayDate}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          )}
+          
+          {/* Legend */}
+          <div className="flex justify-center space-x-6 mt-4">
+            <div className={`flex items-center text-xs ${
+              theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              <div className={`w-3 h-3 rounded-full mr-2 ${
+                theme === 'gold' ? 'bg-yellow-400' : 'bg-blue-500'
+              }`} />
+              Calls
+            </div>
+            <div className={`flex items-center text-xs ${
+              theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              <div className={`w-3 h-3 rounded-full mr-2 ${
+                theme === 'gold' ? 'bg-yellow-600' : 'bg-green-500'
+              }`} />
+              SMS
+            </div>
+            <div className={`flex items-center text-xs ${
+              theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              <div className={`w-3 h-3 rounded-full mr-2 ${
+                theme === 'gold' ? 'bg-orange-400' : 'bg-purple-500'
+              }`} />
+              WhatsApp
+            </div>
+          </div>
         </div>
       </div>
 
