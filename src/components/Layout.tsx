@@ -20,7 +20,7 @@ import {
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Target, label: 'Campaigns', path: '/campaigns' },
-  { icon: Activity, label: 'Cold Performance', path: '/leads' },
+  { icon: Activity, label: 'Performance', path: '/leads' },
   { icon: Calendar, label: 'Inbox', path: '/booked' },
   { icon: Search, label: 'Targeting', path: '/targeting' },
   { icon: Settings, label: 'Settings', path: '/settings' },
