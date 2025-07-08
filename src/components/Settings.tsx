@@ -10,7 +10,8 @@ import {
   MessageSquare,
   Check,
   Crown,
-  Zap
+  Zap,
+  Edit2
 } from 'lucide-react';
 
 export function Settings() {
@@ -666,12 +667,12 @@ export function Settings() {
                 </div>
               </div>
 
-              {/* Channel Setup Guide */}
               <div className={`p-4 rounded-lg ${
                 theme === 'gold'
                   ? 'bg-yellow-400/10 border border-yellow-400/20'
                   : 'bg-blue-50 border border-blue-200'
               }`}>
+                {/* Channel Setup Guide */}
                 <h4 className={`text-sm font-medium mb-2 ${
                   theme === 'gold' ? 'text-yellow-400' : 'text-blue-700'
                 }`}>
