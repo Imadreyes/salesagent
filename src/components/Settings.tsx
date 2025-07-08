@@ -7,6 +7,7 @@ import {
   Shield, 
   Palette, 
   CreditCard,
+  MessageSquare,
   Check,
   Crown,
   Zap
@@ -16,12 +17,14 @@ export function Settings() {
   const { user, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'channels' | 'billing'>('profile');
 
   const tabs = [
     { key: 'profile', label: 'Profile', icon: User },
     { key: 'notifications', label: 'Notifications', icon: Bell },
     { key: 'security', label: 'Security', icon: Shield },
     { key: 'appearance', label: 'Appearance', icon: Palette },
+    { key: 'channels', label: 'Channels', icon: MessageSquare },
     { key: 'billing', label: 'Billing & Subscription', icon: CreditCard },
   ];
 
@@ -337,6 +340,335 @@ export function Settings() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Channels Tab */}
+          {activeTab === 'channels' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className={`text-lg font-semibold mb-4 ${
+                  theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+                }`}>
+                  Communication Channels
+                </h3>
+                <p className={`text-sm ${
+                  theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                  Configure your communication channels for calls, SMS, and WhatsApp
+                </p>
+              </div>
+
+              {/* Twilio Configuration */}
+              <div className={`p-6 rounded-lg border ${
+                theme === 'gold'
+                  ? 'border-yellow-400/20 bg-yellow-400/5'
+                  : 'border-gray-200 bg-gray-50'
+              }`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h4 className={`text-md font-semibold ${
+                      theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+                    }`}>
+                      Twilio Integration
+                    </h4>
+                    <p className={`text-sm ${
+                      theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      Connect your Twilio account for SMS and voice calls
+                    </p>
+                  </div>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    theme === 'gold'
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    Not Connected
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${
+                      theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Account SID
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                        theme === 'gold'
+                          ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
+                          : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${
+                      theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Auth Token
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="••••••••••••••••••••••••••••••••"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                        theme === 'gold'
+                          ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
+                          : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <button className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  theme === 'gold'
+                    ? 'gold-gradient text-black hover-gold'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}>
+                  Connect Twilio
+                </button>
+              </div>
+
+              {/* Phone Numbers */}
+              <div className={`p-6 rounded-lg border ${
+                theme === 'gold'
+                  ? 'border-yellow-400/20 bg-yellow-400/5'
+                  : 'border-gray-200 bg-gray-50'
+              }`}>
+                <h4 className={`text-md font-semibold mb-4 ${
+                  theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+                }`}>
+                  Phone Numbers
+                </h4>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${
+                      theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      SMS Number
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="+1234567890"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                        theme === 'gold'
+                          ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
+                          : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${
+                      theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      WhatsApp Number
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="+1234567890"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                        theme === 'gold'
+                          ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
+                          : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${
+                      theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Voice Call Number
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="+1234567890"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                        theme === 'gold'
+                          ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
+                          : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* VAPI Configuration */}
+              <div className={`p-6 rounded-lg border ${
+                theme === 'gold'
+                  ? 'border-yellow-400/20 bg-yellow-400/5'
+                  : 'border-gray-200 bg-gray-50'
+              }`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h4 className={`text-md font-semibold ${
+                      theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+                    }`}>
+                      VAPI Integration
+                    </h4>
+                    <p className={`text-sm ${
+                      theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      Connect VAPI for AI-powered voice calls
+                    </p>
+                  </div>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    theme === 'gold'
+                      ? 'bg-green-500/20 text-green-400'
+                      : 'bg-green-100 text-green-800'
+                  }`}>
+                    Connected
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${
+                      theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      VAPI API Key
+                    </label>
+                    <input
+                      type="password"
+                      value="••••••••••••••••••••••••••••••••"
+                      disabled
+                      className={`w-full px-3 py-2 border rounded-lg ${
+                        theme === 'gold'
+                          ? 'border-yellow-400/30 bg-black/30 text-gray-400'
+                          : 'border-gray-300 bg-gray-50 text-gray-500'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    <button className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                      theme === 'gold'
+                        ? 'border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10'
+                        theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        Calls This Month
+                      </label>
+                      <div className={`text-sm ${
+                        theme === 'gold' ? 'text-gray-300' : 'text-gray-900'
+                      }`}>
+                        342 / 1,000
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Email Channel */}
+                <div className={`p-6 rounded-lg border ${
+                  theme === 'gold'
+                    ? 'border-yellow-400/20 bg-yellow-400/5'
+                    : 'border-gray-200 bg-gray-50'
+                }`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg ${
+                        theme === 'gold' ? 'bg-green-500/20' : 'bg-green-100'
+                      }`}>
+                        <MessageSquare className={`h-5 w-5 ${
+                          theme === 'gold' ? 'text-green-400' : 'text-green-600'
+                        }`} />
+                      </div>
+                      <div>
+                        <h4 className={`font-semibold ${
+                          theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+                        }`}>
+                          Email Provider
+                        </h4>
+                        <p className={`text-sm ${
+                          theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                        }`}>
+                          SMTP Email delivery
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        theme === 'gold'
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        Setup Required
+                      </span>
+                      <button className={`p-2 rounded-lg transition-colors ${
+                        theme === 'gold'
+                          ? 'text-gray-400 hover:bg-gray-800'
+                          : 'text-gray-500 hover:bg-gray-100'
+                      }`}>
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${
+                        theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        SMTP Server
+                      </label>
+                      <div className={`text-sm ${
+                        theme === 'gold' ? 'text-gray-500' : 'text-gray-400'
+                      }`}>
+                        Not configured
+                      </div>
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${
+                        theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        From Email
+                      </label>
+                      <div className={`text-sm ${
+                        theme === 'gold' ? 'text-gray-500' : 'text-gray-400'
+                      }`}>
+                        Not configured
+                      </div>
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${
+                        theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        Status
+                      </label>
+                      <div className={`text-sm ${
+                        theme === 'gold' ? 'text-gray-500' : 'text-gray-400'
+                      }`}>
+                        Inactive
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Channel Setup Guide */}
+              <div className={`p-4 rounded-lg ${
+                theme === 'gold'
+                  ? 'bg-yellow-400/10 border border-yellow-400/20'
+                  : 'bg-blue-50 border border-blue-200'
+              }`}>
+                <h4 className={`text-sm font-medium mb-2 ${
+                  theme === 'gold' ? 'text-yellow-400' : 'text-blue-700'
+                }`}>
+                  Channel Setup Guide
+                </h4>
+                <ul className={`text-sm space-y-1 ${
+                  theme === 'gold' ? 'text-gray-400' : 'text-blue-600'
+                }`}>
+                  <li>• Configure Twilio for SMS, WhatsApp, and voice capabilities</li>
+                  <li>• Set up VAPI for AI-powered voice calls</li>
+                  <li>• Add email provider for automated email sequences</li>
+                  <li>• Test each channel before launching campaigns</li>
+                </ul>
               </div>
             </div>
           )}
