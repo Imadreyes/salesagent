@@ -51,6 +51,7 @@ export function EditCampaign() {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [activeTab, setActiveTab] = useState<'analytics' | 'leads' | 'details' | 'training' | 'schedule'>('analytics');
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -127,6 +128,38 @@ export function EditCampaign() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!id || !user) return;
+
+    setPublishing(true);
+    try {
+      const { error } = await supabase
+        .from('campaigns')
+        .update({ status: 'active' })
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setCampaign(prev => prev ? { ...prev, status: 'active' } : null);
+      setFormData(prev => ({ ...prev, status: 'active' }));
+
+      setUploadResult({
+        success: true,
+        message: 'Campaign published successfully!'
+      });
+    } catch (error) {
+      console.error('Error publishing campaign:', error);
+      setUploadResult({
+        success: false,
+        message: 'Error publishing campaign. Please try again.'
+      });
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -456,6 +489,20 @@ export function EditCampaign() {
             )}
             Save Changes
           </button>
+          {campaign?.status === 'draft' && (
+            <button
+              onClick={handlePublish}
+              disabled={publishing}
+              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {publishing ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" />
+              )}
+              Publish Campaign
+            </button>
+          )}
         </div>
       </div>
 
