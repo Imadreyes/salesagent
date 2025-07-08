@@ -81,6 +81,187 @@ export type Database = {
           created_at?: string;
         };
       };
+      campaign_sequences: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          step_number: number;
+          message_type: 'call' | 'sms' | 'whatsapp' | 'email';
+          message_content: string | null;
+          delay_hours: number;
+          conditions: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          step_number: number;
+          message_type: 'call' | 'sms' | 'whatsapp' | 'email';
+          message_content?: string | null;
+          delay_hours: number;
+          conditions?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          step_number?: number;
+          message_type?: 'call' | 'sms' | 'whatsapp' | 'email';
+          message_content?: string | null;
+          delay_hours?: number;
+          conditions?: string | null;
+          created_at?: string;
+        };
+      };
+      conversation_history: {
+        Row: {
+          id: string;
+          lead_id: string;
+          campaign_id: string;
+          message_type: 'call' | 'sms' | 'whatsapp' | 'email';
+          direction: 'inbound' | 'outbound';
+          content: string | null;
+          response_received: boolean;
+          call_duration: number | null;
+          call_recording_url: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lead_id: string;
+          campaign_id: string;
+          message_type: 'call' | 'sms' | 'whatsapp' | 'email';
+          direction: 'inbound' | 'outbound';
+          content?: string | null;
+          response_received?: boolean;
+          call_duration?: number | null;
+          call_recording_url?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          lead_id?: string;
+          campaign_id?: string;
+          message_type?: 'call' | 'sms' | 'whatsapp' | 'email';
+          direction?: 'inbound' | 'outbound';
+          content?: string | null;
+          response_received?: boolean;
+          call_duration?: number | null;
+          call_recording_url?: string | null;
+          created_at?: string;
+        };
+      };
+      training_resources: {
+        Row: {
+          id: string;
+          user_id: string;
+          campaign_id: string | null;
+          resource_type: 'note' | 'file' | 'link';
+          title: string | null;
+          content: string | null;
+          file_url: string | null;
+          link_url: string | null;
+          tags: string[] | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          campaign_id?: string | null;
+          resource_type: 'note' | 'file' | 'link';
+          title?: string | null;
+          content?: string | null;
+          file_url?: string | null;
+          link_url?: string | null;
+          tags?: string[] | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          campaign_id?: string | null;
+          resource_type?: 'note' | 'file' | 'link';
+          title?: string | null;
+          content?: string | null;
+          file_url?: string | null;
+          link_url?: string | null;
+          tags?: string[] | null;
+          created_at?: string;
+        };
+      };
+      bookings: {
+        Row: {
+          id: string;
+          lead_id: string;
+          campaign_id: string;
+          booking_type: 'calendar' | 'manual' | 'reply';
+          booking_date: string | null;
+          booking_url: string | null;
+          notes: string | null;
+          status: 'scheduled' | 'completed' | 'cancelled' | 'no_show';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lead_id: string;
+          campaign_id: string;
+          booking_type: 'calendar' | 'manual' | 'reply';
+          booking_date?: string | null;
+          booking_url?: string | null;
+          notes?: string | null;
+          status?: 'scheduled' | 'completed' | 'cancelled' | 'no_show';
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          lead_id?: string;
+          campaign_id?: string;
+          booking_type?: 'calendar' | 'manual' | 'reply';
+          booking_date?: string | null;
+          booking_url?: string | null;
+          notes?: string | null;
+          status?: 'scheduled' | 'completed' | 'cancelled' | 'no_show';
+          created_at?: string;
+        };
+      };
+      lead_sequence_progress: {
+        Row: {
+          id: string;
+          lead_id: string;
+          campaign_id: string;
+          current_step: number;
+          last_contact_date: string | null;
+          next_contact_date: string | null;
+          completed: boolean;
+          paused: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lead_id: string;
+          campaign_id: string;
+          current_step?: number;
+          last_contact_date?: string | null;
+          next_contact_date?: string | null;
+          completed?: boolean;
+          paused?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          lead_id?: string;
+          campaign_id?: string;
+          current_step?: number;
+          last_contact_date?: string | null;
+          next_contact_date?: string | null;
+          completed?: boolean;
+          paused?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       uploaded_leads: {
         Row: {
           id: string;

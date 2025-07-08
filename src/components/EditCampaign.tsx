@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { ArrowLeft, Save, Upload, MessageCircle, CheckCircle, XCircle, AlertCircle, Eye, ArrowRight, ArrowDown } from 'lucide-react';
+import { SequenceBuilder } from './SequenceBuilder';
+import { AITrainer } from './AITrainer';
 
 interface Campaign {
   id: string;
@@ -48,7 +50,7 @@ export function EditCampaign() {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'leads' | 'chat' | 'schedule'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'leads' | 'sequence' | 'training' | 'schedule'>('details');
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
@@ -337,6 +339,38 @@ export function EditCampaign() {
     }
   };
 
+  const triggerChannelsEngine = async () => {
+    if (!campaign || !user) return;
+
+    try {
+      const response = await fetch('https://mazirhx.app.n8n.cloud/webhook/channels-engine', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          campaign_id: campaign.id,
+          trigger_type: 'manual',
+        }),
+      });
+
+      if (response.ok) {
+        setUploadResult({
+          success: true,
+          message: 'Channels engine triggered successfully!'
+        });
+      } else {
+        throw new Error('Failed to trigger channels engine');
+      }
+    } catch (error) {
+      setUploadResult({
+        success: false,
+        message: 'Failed to trigger channels engine. Please try again.'
+      });
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
@@ -481,7 +515,8 @@ export function EditCampaign() {
             {[
               { key: 'details', label: 'Campaign Details' },
               { key: 'leads', label: 'Upload Leads' },
-              { key: 'chat', label: 'Training AI Center' },
+              { key: 'sequence', label: 'Message Sequence' },
+              { key: 'training', label: 'AI Training' },
               { key: 'schedule', label: 'Schedule' }
             ].map((tab) => (
               <button
@@ -791,42 +826,29 @@ export function EditCampaign() {
             </div>
           )}
 
-          {/* Training AI Center Tab */}
-          {activeTab === 'chat' && (
-            <div className="h-96 flex flex-col">
-              <div className="flex-1 bg-gray-50 rounded-lg p-4 mb-4 overflow-y-auto">
-                <div className="text-center py-8">
-                  <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Training AI Center
-                  </h3>
-                  <p className="text-gray-600 px-4">
-                    🚧 Coming soon: Train your AI caller agent using conversational prompts and sequences.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  placeholder="Type your message to train the AI..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled
-                />
-                <button
-                  disabled
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
+          {/* Message Sequence Tab */}
+          {activeTab === 'sequence' && campaign && (
+            <SequenceBuilder campaignId={campaign.id} />
+          )}
+
+          {/* AI Training Tab */}
+          {activeTab === 'training' && campaign && (
+            <AITrainer campaignId={campaign.id} />
           )}
 
           {/* Schedule Tab */}
           {activeTab === 'schedule' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900">Campaign Schedule</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Campaign Schedule</h3>
+                <button
+                  onClick={triggerChannelsEngine}
+                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Trigger Channels Engine
+                </button>
+              </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>

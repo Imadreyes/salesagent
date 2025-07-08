@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Search, Filter, Phone, Mail, ExternalLink, User } from 'lucide-react';
+import { LeadDetail } from './LeadDetail';
 
 interface Lead {
   id: string;
@@ -31,6 +32,7 @@ export function LeadsTracker() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCampaign, setSelectedCampaign] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedLead, setSelectedLead] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -270,17 +272,13 @@ export function LeadsTracker() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {lead.booking_url && (
-                        <a
-                          href={lead.booking_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 flex items-center"
-                        >
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          View Booking
-                        </a>
-                      )}
+                      <button
+                        onClick={() => setSelectedLead(lead.id)}
+                        className="text-blue-600 hover:text-blue-800 flex items-center"
+                      >
+                        <User className="h-4 w-4 mr-1" />
+                        View Details
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -289,6 +287,15 @@ export function LeadsTracker() {
           </div>
         )}
       </div>
+
+      {/* Lead Detail Modal */}
+      {selectedLead && (
+        <LeadDetail
+          leadId={selectedLead}
+          campaignId={campaigns.find(c => c.id === leads.find(l => l.id === selectedLead)?.campaign_id)?.id || ''}
+          onClose={() => setSelectedLead(null)}
+        />
+      )}
     </div>
   );
 }
