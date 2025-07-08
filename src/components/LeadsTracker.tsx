@@ -75,9 +75,14 @@ export function LeadsTracker() {
 
       // Fetch performance data for each campaign
       const performancePromises = campaigns.map(async (campaign) => {
-        // Get total leads
-        const { data: leadsData } = await supabase
+        // Get total leads from both uploaded_leads and leads tables
+        const { data: uploadedLeadsData } = await supabase
           .from('uploaded_leads')
+          .select('id')
+          .eq('campaign_id', campaign.id);
+
+        const { data: leadsData } = await supabase
+          .from('leads')
           .select('id')
           .eq('campaign_id', campaign.id);
 
@@ -90,7 +95,7 @@ export function LeadsTracker() {
         // Get activity history
         const { data: activityData } = await supabase
           .from('lead_activity_history')
-          .select('type')
+          .select('type, channel_response')
           .eq('campaign_id', campaign.id);
 
         // Get conversation history for response rate
@@ -115,7 +120,7 @@ export function LeadsTracker() {
 
         // Process activity stats
         const activityStats = {
-          calls: activityData?.filter(a => a.type === 'call').length || 0,
+          calls: activityData?.filter(a => a.type === 'call' || a.type === 'vapi').length || 0,
           sms: activityData?.filter(a => a.type === 'sms').length || 0,
           whatsapp: activityData?.filter(a => a.type === 'whatsapp').length || 0,
           bookings: bookingsData?.length || 0,
@@ -126,9 +131,12 @@ export function LeadsTracker() {
         const responses = conversationData?.filter(c => c.from_role === 'lead').length || 0;
         const responseRate = outboundMessages > 0 ? (responses / outboundMessages) * 100 : 0;
 
+        // Calculate total leads from both tables
+        const totalLeads = (uploadedLeadsData?.length || 0) + (leadsData?.length || 0);
+
         return {
           campaign,
-          totalLeads: leadsData?.length || 0,
+          totalLeads,
           sequenceProgress,
           activityStats,
           responseRate,
@@ -139,6 +147,8 @@ export function LeadsTracker() {
       setPerformanceData(performanceResults);
     } catch (error) {
       console.error('Error fetching campaign performance:', error);
+      // Set empty data on error to prevent infinite loading
+      setPerformanceData([]);
     } finally {
       setLoading(false);
     }
