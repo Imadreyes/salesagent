@@ -51,7 +51,7 @@ export function Layout() {
           {theme === 'gold' ? (
             <Crown className="absolute inset-0 m-auto h-8 w-8 text-yellow-400" />
           ) : (
-            <Activity className="absolute inset-0 m-auto h-4 w-4 text-blue-600" />
+            <Zap className="absolute inset-0 m-auto h-8 w-8 text-blue-600" />
           )}
         </div>
       </div>
@@ -104,12 +104,12 @@ export function Layout() {
           <div className="flex items-center space-x-2">
             {theme === 'gold' ? (
               <>
-                <Crown className="h-8 w-8 text-yellow-400" />
+                <Crown className="h-6 w-6 text-yellow-400" />
                 <h1 className="text-xl font-bold gold-text-gradient">Elite Outreach</h1>
               </>
             ) : (
               <>
-                <Target className="h-8 w-8 text-blue-600" />
+                <Zap className="h-6 w-6 text-blue-600" />
                 <h1 className="text-xl font-bold text-gray-900">Cold Outreach</h1>
               </>
             )}

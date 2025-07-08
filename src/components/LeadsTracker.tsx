@@ -228,9 +228,16 @@ export function LeadsTracker() {
       const { data: recentActivities } = await supabase
         .from('lead_activity_history')
         .select(`
-          *,
-          campaigns!inner(offer),
-          leads!inner(name)
+          id,
+          lead_id,
+          campaign_id,
+          status,
+          type,
+          notes,
+          channel_response,
+          executed_at,
+          campaigns(offer),
+          leads(name)
         `)
         .gte('executed_at', oneHourAgo.toISOString())
         .order('executed_at', { ascending: false })
@@ -240,8 +247,8 @@ export function LeadsTracker() {
         const formattedActivities: LiveActivity[] = recentActivities.map(activity => ({
           id: activity.id,
           type: activity.type as any,
-          campaign_name: (activity.campaigns as any)?.offer || 'Unknown Campaign',
-          lead_name: (activity.leads as any)?.name || 'Unknown Lead',
+          campaign_name: activity.campaigns?.offer || 'Unknown Campaign',
+          lead_name: activity.leads?.name || 'Unknown Lead',
           timestamp: activity.executed_at,
           status: activity.status === 'completed' ? 'success' : activity.status === 'failed' ? 'failed' : 'pending',
           message: activity.notes,

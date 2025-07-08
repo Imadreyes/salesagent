@@ -102,7 +102,7 @@ export function Dashboard() {
           {theme === 'gold' ? (
             <Crown className="absolute inset-0 m-auto h-4 w-4 text-yellow-400" />
           ) : (
-            <Target className="absolute inset-0 m-auto h-4 w-4 text-blue-600" />
+            <Zap className="absolute inset-0 m-auto h-4 w-4 text-blue-600" />
           )}
         </div>
       </div>
@@ -116,7 +116,7 @@ export function Dashboard() {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center space-x-3 mb-2">
-              <Crown className="h-8 w-8 text-yellow-400" />
+              <Zap className="h-8 w-8 text-blue-600" />
               <h1 className="text-3xl font-bold gold-text-gradient">Elite Dashboard</h1>
             </div>
             <p className="text-gray-400">
