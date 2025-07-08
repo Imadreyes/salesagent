@@ -665,7 +665,7 @@ export function Settings() {
                     </div>
                   </div>
                 </div>
-              </div>
+
 
               <div className={`p-4 rounded-lg ${
                 theme === 'gold'
@@ -689,6 +689,7 @@ export function Settings() {
               </div>
             </div>
           )}
+          </div>
 
           {/* Billing Tab */}
           {activeTab === 'billing' && (
