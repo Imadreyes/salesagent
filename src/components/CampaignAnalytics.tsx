@@ -82,7 +82,7 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
         .from('conversation_history')
         .select('*')
         .eq('campaign_id', campaignId)
-        .gte('created_at', startDate.toISOString());
+        .gte('timestamp', startDate.toISOString());
 
       if (conversationError) throw conversationError;
 
@@ -96,10 +96,10 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
       if (bookingsError) throw bookingsError;
 
       // Process data
-      const callsMade = conversationData?.filter(c => c.message_type === 'call' && c.direction === 'outbound').length || 0;
-      const smssSent = conversationData?.filter(c => c.message_type === 'sms' && c.direction === 'outbound').length || 0;
-      const whatsappSent = conversationData?.filter(c => c.message_type === 'whatsapp' && c.direction === 'outbound').length || 0;
-      const responsesReceived = conversationData?.filter(c => c.response_received).length || 0;
+      const callsMade = conversationData?.filter(c => c.channel === 'vapi' && c.from_role === 'ai').length || 0;
+      const smssSent = conversationData?.filter(c => c.channel === 'sms' && c.from_role === 'ai').length || 0;
+      const whatsappSent = conversationData?.filter(c => c.channel === 'whatsapp' && c.from_role === 'ai').length || 0;
+      const responsesReceived = conversationData?.filter(c => c.from_role === 'lead').length || 0;
       const totalOutbound = callsMade + smssSent + whatsappSent;
       const responseRate = totalOutbound > 0 ? (responsesReceived / totalOutbound) * 100 : 0;
 
@@ -111,14 +111,14 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
         const dateStr = date.toISOString().split('T')[0];
         
         const dayConversations = conversationData?.filter(c => 
-          c.created_at.startsWith(dateStr) && c.direction === 'outbound'
+          c.timestamp.startsWith(dateStr) && c.from_role === 'ai'
         ) || [];
 
         dailyActivity.push({
           date: dateStr,
-          calls: dayConversations.filter(c => c.message_type === 'call').length,
-          sms: dayConversations.filter(c => c.message_type === 'sms').length,
-          whatsapp: dayConversations.filter(c => c.message_type === 'whatsapp').length,
+          calls: dayConversations.filter(c => c.channel === 'vapi').length,
+          sms: dayConversations.filter(c => c.channel === 'sms').length,
+          whatsapp: dayConversations.filter(c => c.channel === 'whatsapp').length,
         });
       }
 
