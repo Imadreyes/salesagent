@@ -14,7 +14,13 @@ import {
   BarChart3,
   Activity,
   Crown,
-  Zap
+  Zap,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 
 interface Campaign {
@@ -40,6 +46,23 @@ interface CampaignPerformance {
     bookings: number;
   };
   responseRate: number;
+  dailyActivity: Array<{
+    date: string;
+    calls: number;
+    sms: number;
+    whatsapp: number;
+    total: number;
+  }>;
+}
+
+interface LiveActivity {
+  id: string;
+  type: 'call' | 'sms' | 'whatsapp' | 'booking' | 'reply';
+  campaign_name: string;
+  lead_name: string;
+  timestamp: string;
+  status: 'success' | 'failed' | 'pending';
+  message?: string;
 }
 
 export function LeadsTracker() {
@@ -47,15 +70,30 @@ export function LeadsTracker() {
   const { theme } = useTheme();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [performanceData, setPerformanceData] = useState<CampaignPerformance[]>([]);
+  const [liveActivities, setLiveActivities] = useState<LiveActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   useEffect(() => {
     if (user) {
       fetchCampaignPerformance();
     }
   }, [user]);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      fetchCampaignPerformance();
+      fetchLiveActivities();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, user]);
 
   const fetchCampaignPerformance = async () => {
     if (!user) return;
@@ -95,13 +133,13 @@ export function LeadsTracker() {
         // Get activity history
         const { data: activityData } = await supabase
           .from('lead_activity_history')
-          .select('type, channel_response')
+          .select('type, channel_response, executed_at')
           .eq('campaign_id', campaign.id);
 
         // Get conversation history for response rate
         const { data: conversationData } = await supabase
           .from('conversation_history')
-          .select('from_role')
+          .select('from_role, timestamp, channel')
           .eq('campaign_id', campaign.id);
 
         // Get bookings
@@ -131,6 +169,30 @@ export function LeadsTracker() {
         const responses = conversationData?.filter(c => c.from_role === 'lead').length || 0;
         const responseRate = outboundMessages > 0 ? (responses / outboundMessages) * 100 : 0;
 
+        // Generate daily activity for the last 7 days
+        const dailyActivity = [];
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toISOString().split('T')[0];
+          
+          const dayConversations = conversationData?.filter(c => 
+            c.timestamp.startsWith(dateStr) && c.from_role === 'ai'
+          ) || [];
+
+          const calls = dayConversations.filter(c => c.channel === 'vapi').length;
+          const sms = dayConversations.filter(c => c.channel === 'sms').length;
+          const whatsapp = dayConversations.filter(c => c.channel === 'whatsapp').length;
+
+          dailyActivity.push({
+            date: dateStr,
+            calls,
+            sms,
+            whatsapp,
+            total: calls + sms + whatsapp,
+          });
+        }
+
         // Calculate total leads from both tables
         const totalLeads = (uploadedLeadsData?.length || 0) + (leadsData?.length || 0);
 
@@ -140,17 +202,55 @@ export function LeadsTracker() {
           sequenceProgress,
           activityStats,
           responseRate,
+          dailyActivity,
         };
       });
 
       const performanceResults = await Promise.all(performancePromises);
       setPerformanceData(performanceResults);
+      setLastUpdate(new Date());
     } catch (error) {
       console.error('Error fetching campaign performance:', error);
-      // Set empty data on error to prevent infinite loading
       setPerformanceData([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchLiveActivities = async () => {
+    if (!user) return;
+
+    try {
+      // Get recent activities from the last hour
+      const oneHourAgo = new Date();
+      oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+
+      const { data: recentActivities } = await supabase
+        .from('lead_activity_history')
+        .select(`
+          *,
+          campaigns!inner(offer),
+          uploaded_leads!inner(name)
+        `)
+        .gte('executed_at', oneHourAgo.toISOString())
+        .order('executed_at', { ascending: false })
+        .limit(20);
+
+      if (recentActivities) {
+        const formattedActivities: LiveActivity[] = recentActivities.map(activity => ({
+          id: activity.id,
+          type: activity.type as any,
+          campaign_name: (activity.campaigns as any)?.offer || 'Unknown Campaign',
+          lead_name: (activity.uploaded_leads as any)?.name || 'Unknown Lead',
+          timestamp: activity.executed_at,
+          status: activity.status === 'completed' ? 'success' : activity.status === 'failed' ? 'failed' : 'pending',
+          message: activity.notes,
+        }));
+
+        setLiveActivities(formattedActivities);
+      }
+    } catch (error) {
+      console.error('Error fetching live activities:', error);
     }
   };
 
@@ -176,7 +276,45 @@ export function LeadsTracker() {
     }
   };
 
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'call':
+      case 'vapi':
+        return Phone;
+      case 'sms':
+      case 'whatsapp':
+        return MessageSquare;
+      case 'booking':
+        return Calendar;
+      case 'reply':
+        return MessageSquare;
+      default:
+        return Activity;
+    }
+  };
+
+  const getActivityStatusColor = (status: string) => {
+    switch (status) {
+      case 'success':
+        return theme === 'gold' ? 'text-green-400' : 'text-green-600';
+      case 'failed':
+        return theme === 'gold' ? 'text-red-400' : 'text-red-600';
+      case 'pending':
+        return theme === 'gold' ? 'text-yellow-400' : 'text-yellow-600';
+      default:
+        return theme === 'gold' ? 'text-gray-400' : 'text-gray-600';
+    }
+  };
+
   const uniqueStatuses = [...new Set(campaigns.map(campaign => campaign.status).filter(Boolean))];
+
+  // Calculate total metrics across all campaigns
+  const totalMetrics = performanceData.reduce((acc, performance) => ({
+    totalLeads: acc.totalLeads + performance.totalLeads,
+    totalCalls: acc.totalCalls + performance.activityStats.calls,
+    totalMessages: acc.totalMessages + performance.activityStats.sms + performance.activityStats.whatsapp,
+    totalBookings: acc.totalBookings + performance.activityStats.bookings,
+  }), { totalLeads: 0, totalCalls: 0, totalMessages: 0, totalBookings: 0 });
 
   if (loading) {
     return (
@@ -201,21 +339,239 @@ export function LeadsTracker() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <div className="flex items-center space-x-3 mb-2">
-          {theme === 'gold' ? (
-            <Crown className="h-8 w-8 text-yellow-400" />
-          ) : (
-            <Activity className="h-8 w-8 text-blue-600" />
-          )}
-          <h1 className={`text-3xl font-bold ${
-            theme === 'gold' ? 'gold-text-gradient' : 'text-gray-900'
-          }`}>
-            Campaign Performance
-          </h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3 mb-2">
+            {theme === 'gold' ? (
+              <Crown className="h-8 w-8 text-yellow-400" />
+            ) : (
+              <Activity className="h-8 w-8 text-blue-600" />
+            )}
+            <h1 className={`text-3xl font-bold ${
+              theme === 'gold' ? 'gold-text-gradient' : 'text-gray-900'
+            }`}>
+              Cold Performance
+            </h1>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setAutoRefresh(!autoRefresh)}
+                className={`p-2 rounded-lg transition-colors ${
+                  autoRefresh
+                    ? theme === 'gold'
+                      ? 'bg-yellow-400/20 text-yellow-400'
+                      : 'bg-blue-100 text-blue-600'
+                    : theme === 'gold'
+                      ? 'bg-gray-800 text-gray-400'
+                      : 'bg-gray-100 text-gray-500'
+                }`}
+                title={autoRefresh ? 'Auto-refresh enabled' : 'Auto-refresh disabled'}
+              >
+                <RefreshCw className={`h-4 w-4 ${autoRefresh ? 'animate-spin' : ''}`} />
+              </button>
+              <span className={`text-xs ${
+                theme === 'gold' ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                Last updated: {lastUpdate.toLocaleTimeString()}
+              </span>
+            </div>
+          </div>
         </div>
         <p className={theme === 'gold' ? 'text-gray-400' : 'text-gray-600'}>
-          Track the progress and performance of all your campaign sequences
+          Real-time tracking of your cold outreach system performance and channel activities
         </p>
+      </div>
+
+      {/* Global Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className={`p-4 rounded-lg border ${
+          theme === 'gold'
+            ? 'border-yellow-400/20 bg-black/20'
+            : 'border-gray-200 bg-white'
+        }`}>
+          <div className="flex items-center space-x-2 mb-2">
+            <Users className={`h-4 w-4 ${
+              theme === 'gold' ? 'text-yellow-400' : 'text-blue-600'
+            }`} />
+            <span className={`text-xs font-medium ${
+              theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              Total Leads
+            </span>
+          </div>
+          <p className={`text-2xl font-bold ${
+            theme === 'gold' ? 'text-yellow-400' : 'text-blue-600'
+          }`}>
+            {totalMetrics.totalLeads.toLocaleString()}
+          </p>
+        </div>
+
+        <div className={`p-4 rounded-lg border ${
+          theme === 'gold'
+            ? 'border-yellow-400/20 bg-black/20'
+            : 'border-gray-200 bg-white'
+        }`}>
+          <div className="flex items-center space-x-2 mb-2">
+            <Phone className={`h-4 w-4 ${
+              theme === 'gold' ? 'text-yellow-400' : 'text-green-600'
+            }`} />
+            <span className={`text-xs font-medium ${
+              theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              Total Calls
+            </span>
+          </div>
+          <p className={`text-2xl font-bold ${
+            theme === 'gold' ? 'text-yellow-400' : 'text-green-600'
+          }`}>
+            {totalMetrics.totalCalls.toLocaleString()}
+          </p>
+        </div>
+
+        <div className={`p-4 rounded-lg border ${
+          theme === 'gold'
+            ? 'border-yellow-400/20 bg-black/20'
+            : 'border-gray-200 bg-white'
+        }`}>
+          <div className="flex items-center space-x-2 mb-2">
+            <MessageSquare className={`h-4 w-4 ${
+              theme === 'gold' ? 'text-yellow-400' : 'text-purple-600'
+            }`} />
+            <span className={`text-xs font-medium ${
+              theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              Messages Sent
+            </span>
+          </div>
+          <p className={`text-2xl font-bold ${
+            theme === 'gold' ? 'text-yellow-400' : 'text-purple-600'
+          }`}>
+            {totalMetrics.totalMessages.toLocaleString()}
+          </p>
+        </div>
+
+        <div className={`p-4 rounded-lg border ${
+          theme === 'gold'
+            ? 'border-yellow-400/20 bg-black/20'
+            : 'border-gray-200 bg-white'
+        }`}>
+          <div className="flex items-center space-x-2 mb-2">
+            <Calendar className={`h-4 w-4 ${
+              theme === 'gold' ? 'text-yellow-400' : 'text-orange-600'
+            }`} />
+            <span className={`text-xs font-medium ${
+              theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              Total Bookings
+            </span>
+          </div>
+          <p className={`text-2xl font-bold ${
+            theme === 'gold' ? 'text-yellow-400' : 'text-orange-600'
+          }`}>
+            {totalMetrics.totalBookings.toLocaleString()}
+          </p>
+        </div>
+      </div>
+
+      {/* Live Activity Feed */}
+      <div className={`rounded-xl border ${
+        theme === 'gold' 
+          ? 'black-card gold-border' 
+          : 'bg-white border-gray-200'
+      }`}>
+        <div className={`px-6 py-4 border-b ${
+          theme === 'gold' ? 'border-yellow-400/20' : 'border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Activity className={`h-5 w-5 ${
+                theme === 'gold' ? 'text-yellow-400' : 'text-blue-600'
+              }`} />
+              <h2 className={`text-lg font-semibold ${
+                theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+              }`}>
+                Live Activity Feed
+              </h2>
+              <div className={`w-2 h-2 rounded-full animate-pulse ${
+                theme === 'gold' ? 'bg-yellow-400' : 'bg-green-500'
+              }`} />
+            </div>
+            <span className={`text-xs ${
+              theme === 'gold' ? 'text-gray-400' : 'text-gray-500'
+            }`}>
+              Last hour
+            </span>
+          </div>
+        </div>
+        
+        <div className="p-6">
+          {liveActivities.length === 0 ? (
+            <div className="text-center py-8">
+              <Clock className={`h-12 w-12 mx-auto mb-4 ${
+                theme === 'gold' ? 'text-gray-600' : 'text-gray-400'
+              }`} />
+              <h3 className={`text-lg font-medium mb-2 ${
+                theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+              }`}>
+                No recent activity
+              </h3>
+              <p className={theme === 'gold' ? 'text-gray-400' : 'text-gray-600'}>
+                Live activities will appear here as your campaigns run
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {liveActivities.map((activity) => {
+                const Icon = getActivityIcon(activity.type);
+                return (
+                  <div
+                    key={activity.id}
+                    className={`flex items-center space-x-3 p-3 rounded-lg ${
+                      theme === 'gold'
+                        ? 'bg-yellow-400/5 border border-yellow-400/10'
+                        : 'bg-gray-50 border border-gray-100'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg ${
+                      theme === 'gold' ? 'bg-yellow-400/20' : 'bg-blue-100'
+                    }`}>
+                      <Icon className={`h-4 w-4 ${getActivityStatusColor(activity.status)}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-sm font-medium ${
+                          theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+                        }`}>
+                          {activity.type.toUpperCase()}
+                        </span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          activity.status === 'success'
+                            ? theme === 'gold' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-800'
+                            : activity.status === 'failed'
+                            ? theme === 'gold' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-800'
+                            : theme === 'gold' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {activity.status}
+                        </span>
+                      </div>
+                      <p className={`text-xs truncate ${
+                        theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        {activity.lead_name} • {activity.campaign_name}
+                      </p>
+                    </div>
+                    <span className={`text-xs ${
+                      theme === 'gold' ? 'text-gray-500' : 'text-gray-500'
+                    }`}>
+                      {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
@@ -410,8 +766,55 @@ export function LeadsTracker() {
                 </div>
               </div>
 
-              {/* Sequence Progress */}
+              {/* Daily Activity Chart */}
               <div className="space-y-4">
+                <h4 className={`text-sm font-medium ${
+                  theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  7-Day Activity Trend
+                </h4>
+                
+                <div className="flex items-end justify-between h-32 px-2">
+                  {performance.dailyActivity.map((day, index) => {
+                    const maxValue = Math.max(...performance.dailyActivity.map(d => d.total), 1);
+                    const height = (day.total / maxValue) * 100;
+                    const date = new Date(day.date);
+                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                    
+                    return (
+                      <div key={index} className="flex flex-col items-center space-y-2 flex-1">
+                        <div className="relative flex flex-col justify-end h-24 w-6">
+                          <div
+                            className={`w-full rounded-t-sm transition-all duration-300 ${
+                              theme === 'gold' ? 'bg-yellow-400' : 'bg-blue-500'
+                            }`}
+                            style={{
+                              height: `${height}%`,
+                              minHeight: day.total > 0 ? '4px' : '2px'
+                            }}
+                            title={`${day.total} activities`}
+                          />
+                          {day.total > 0 && (
+                            <span className={`absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium ${
+                              theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              {day.total}
+                            </span>
+                          )}
+                        </div>
+                        <span className={`text-xs ${
+                          theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                        }`}>
+                          {dayName}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Sequence Progress */}
+              <div className="space-y-4 mt-6">
                 <h4 className={`text-sm font-medium ${
                   theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
                 }`}>

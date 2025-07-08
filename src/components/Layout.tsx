@@ -13,12 +13,13 @@ import {
   X,
   Crown,
   Search,
+  Activity,
 } from 'lucide-react';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Target, label: 'Campaigns', path: '/campaigns' },
-  { icon: Users, label: 'Campaign Performance', path: '/leads' },
+  { icon: Activity, label: 'Cold Performance', path: '/leads' },
   { icon: Calendar, label: 'Inbox', path: '/booked' },
   { icon: Search, label: 'Targeting', path: '/targeting' },
   { icon: Settings, label: 'Settings', path: '/settings' },
@@ -50,7 +51,7 @@ export function Layout() {
           {theme === 'gold' ? (
             <Crown className="absolute inset-0 m-auto h-8 w-8 text-yellow-400" />
           ) : (
-            <Target className="absolute inset-0 m-auto h-8 w-8 text-blue-600" />
+            <Activity className="absolute inset-0 m-auto h-4 w-4 text-blue-600" />
           )}
         </div>
       </div>
