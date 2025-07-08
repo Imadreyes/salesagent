@@ -13,7 +13,7 @@ import { SequenceEditorChat } from './components/SequenceEditorChat';
 import { AdminPanel } from './components/AdminPanel';
 import { Settings } from './components/Settings';
 import { Targeting } from './components/Targeting';
-import AITrainer from './components/AITrainer';
+import { AITrainer } from './components/AITrainer';
 
 function App() {
   return (

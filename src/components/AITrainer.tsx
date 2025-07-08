@@ -15,7 +15,7 @@ interface AITrainerProps {
   campaignId: string;
 }
 
-export default function AITrainer({ campaignId }: AITrainerProps) {
+export function AITrainer({ campaignId }: AITrainerProps) {
   const { theme } = useTheme();
   const [resources, setResources] = useState<TrainingResource[]>([]);
   const [loading, setLoading] = useState(true);
