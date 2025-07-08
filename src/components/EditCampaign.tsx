@@ -51,7 +51,6 @@ export function EditCampaign() {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'leads' | 'sequence' | 'training' | 'schedule'>('details');
   const [activeTab, setActiveTab] = useState<'analytics' | 'leads' | 'details' | 'training' | 'schedule'>('analytics');
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
