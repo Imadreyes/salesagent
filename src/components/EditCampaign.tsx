@@ -4,8 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { ArrowLeft, Save, Upload, MessageCircle, CheckCircle, XCircle, AlertCircle, Eye, ArrowRight, ArrowDown } from 'lucide-react';
 import { AITrainer } from './AITrainer';
-import { CampaignReview } from './CampaignReview';
 import { CampaignAnalytics } from './CampaignAnalytics';
+import { UploadLeadsTab } from './UploadLeadsTab';
 
 interface Campaign {
   id: string;
@@ -52,6 +52,7 @@ export function EditCampaign() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'leads' | 'sequence' | 'training' | 'schedule'>('details');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'leads' | 'details' | 'training' | 'schedule'>('analytics');
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
@@ -514,10 +515,10 @@ export function EditCampaign() {
         <div className="border-b border-gray-200">
           <nav className="flex overflow-x-auto px-4 sm:px-6">
             {[
-              { key: 'details', label: 'Campaign Details' },
-              { key: 'leads', label: 'Upload Leads' },
-              { key: 'training', label: 'AI Training' },
               { key: 'analytics', label: 'Campaign Analytics' },
+              { key: 'leads', label: 'Upload Leads' },
+              { key: 'details', label: 'Campaign Details' },
+              { key: 'training', label: 'AI Training' },
               { key: 'schedule', label: 'Schedule' }
             ].map((tab) => (
               <button
@@ -619,212 +620,14 @@ export function EditCampaign() {
             </form>
           )}
 
+          {/* Campaign Analytics Tab */}
+          {activeTab === 'analytics' && campaign && (
+            <CampaignAnalytics campaignId={campaign.id} />
+          )}
+
           {/* Upload Leads Tab */}
-          {activeTab === 'leads' && (
-            <div className="space-y-6">
-              {!showPreview ? (
-                // File Upload Section
-                <div className="text-center py-12">
-                  <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Upload CSV File
-                  </h3>
-                  <p className="text-gray-600 mb-6 px-4">
-                    Upload a CSV file with your leads data. We'll help you map your columns to our database fields.
-                  </p>
-                  
-                  <div className="max-w-md mx-auto space-y-4 px-4">
-                    <input
-                      type="file"
-                      accept=".csv"
-                      onChange={handleFileSelect}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="text-xs text-gray-500 mt-4 space-y-1 px-4">
-                    <p>• CSV files only with comma-separated values</p>
-                    <p>• First row should contain column headers</p>
-                    <p>• We support various column names and will help you map them</p>
-                  </div>
-                </div>
-              ) : (
-                // CSV Preview and Column Mapping Section
-                <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">CSV Preview & Column Mapping</h3>
-                      <p className="text-sm text-gray-600">
-                        {csvPreview?.totalRows} total rows found. Map our database fields to your CSV columns.
-                      </p>
-                    </div>
-                    <button
-                      onClick={resetUpload}
-                      className="text-sm text-gray-600 hover:text-gray-800 self-start sm:self-auto"
-                    >
-                      Choose Different File
-                    </button>
-                  </div>
-
-                  {/* Column Mapping - Responsive Layout */}
-                  <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
-                    <h4 className="text-sm font-medium text-gray-900 mb-4 flex items-center">
-                      <ArrowRight className="h-4 w-4 mr-2 hidden sm:block" />
-                      <ArrowDown className="h-4 w-4 mr-2 sm:hidden" />
-                      Column Mapping
-                    </h4>
-                    <div className="space-y-4">
-                      {DATABASE_COLUMNS.map((dbCol) => (
-                        <div key={dbCol.key} className="bg-white rounded-lg border border-gray-200 p-4">
-                          {/* Mobile Layout */}
-                          <div className="block sm:hidden space-y-3">
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium text-gray-900">
-                                  {dbCol.label}
-                                </label>
-                                {columnMapping[dbCol.key] && (
-                                  <span className="text-xs text-green-600 font-medium">
-                                    Mapped
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs text-gray-500 mt-1">{dbCol.description}</p>
-                              {columnMapping[dbCol.key] && (
-                                <div className="flex items-center text-green-600 mt-2">
-                                  <ArrowDown className="h-3 w-3 mr-1" />
-                                  <span className="text-xs font-medium">
-                                    From: "{columnMapping[dbCol.key]}"
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <select
-                              value={columnMapping[dbCol.key] || ''}
-                              onChange={(e) => handleColumnMappingChange(dbCol.key, e.target.value)}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                              <option value="">Select CSV column...</option>
-                              {csvPreview?.headers.map((header) => (
-                                <option key={header} value={header}>
-                                  {header}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Desktop Layout */}
-                          <div className="hidden sm:flex sm:items-center sm:space-x-4">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2">
-                                <label className="text-sm font-medium text-gray-900">
-                                  {dbCol.label}
-                                </label>
-                                {columnMapping[dbCol.key] && (
-                                  <div className="flex items-center text-green-600">
-                                    <ArrowRight className="h-3 w-3 mx-1" />
-                                    <span className="text-xs font-medium">
-                                      "{columnMapping[dbCol.key]}"
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                              <p className="text-xs text-gray-500 mt-1">{dbCol.description}</p>
-                            </div>
-                            <div className="flex-shrink-0 w-48">
-                              <select
-                                value={columnMapping[dbCol.key] || ''}
-                                onChange={(e) => handleColumnMappingChange(dbCol.key, e.target.value)}
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              >
-                                <option value="">Select CSV column...</option>
-                                {csvPreview?.headers.map((header) => (
-                                  <option key={header} value={header}>
-                                    {header}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Data Preview - Responsive Table */}
-                  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                      <h4 className="text-sm font-medium text-gray-900 flex items-center">
-                        <Eye className="h-4 w-4 mr-2" />
-                        Data Preview (First 5 rows)
-                      </h4>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            {DATABASE_COLUMNS.filter(col => columnMapping[col.key]).map((dbCol) => (
-                              <th key={dbCol.key} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">
-                                <div className="space-y-1">
-                                  <div className="font-semibold text-blue-600 truncate">{dbCol.label}</div>
-                                  <div className="text-gray-600 normal-case text-xs truncate">
-                                    from "{columnMapping[dbCol.key]}"
-                                  </div>
-                                </div>
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {csvPreview?.rows.map((row, rowIndex) => (
-                            <tr key={rowIndex} className="hover:bg-gray-50">
-                              {DATABASE_COLUMNS.filter(col => columnMapping[col.key]).map((dbCol) => {
-                                const csvColumnIndex = csvPreview.headers.indexOf(columnMapping[dbCol.key]);
-                                const cellValue = csvColumnIndex !== -1 ? row[csvColumnIndex] : '';
-                                return (
-                                  <td key={dbCol.key} className="px-3 py-2 text-sm text-gray-900 max-w-xs truncate">
-                                    {cellValue || '-'}
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Upload Actions - Responsive */}
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                    <div className="text-sm text-gray-600">
-                      {Object.values(columnMapping).filter(Boolean).length} fields mapped
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <button
-                        onClick={resetUpload}
-                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleFileUpload}
-                        disabled={uploadLoading || Object.values(columnMapping).filter(Boolean).length === 0}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {uploadLoading ? (
-                          <div className="flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Uploading {csvPreview?.totalRows} leads...
-                          </div>
-                        ) : (
-                          `Upload ${csvPreview?.totalRows} Leads`
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+          {activeTab === 'leads' && campaign && (
+            <UploadLeadsTab campaignId={campaign.id} />
           )}
 
           {/* AI Training Tab */}
