@@ -113,8 +113,6 @@ export function AITrainer({ campaignId }: AITrainerProps) {
         user_id: user.id,
         campaign_id: campaignId || null,
         type: formData.resource_type, // Updated to match database schema
-        title: formData.title || null,
-        content: formData.resource_type === 'note' ? formData.content : null,
         content: formData.resource_type === 'link' ? formData.link_url : (formData.resource_type === 'note' ? formData.content : null),
       };
 
