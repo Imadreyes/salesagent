@@ -14,6 +14,7 @@ import {
   Crown,
   Search,
   Activity,
+  Zap,
 } from 'lucide-react';
 
 const navItems = [
