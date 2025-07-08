@@ -832,16 +832,6 @@ export function EditCampaign() {
             <AITrainer campaignId={campaign.id} />
           )}
 
-          {/* Campaign Review Tab */}
-          {activeTab === 'review' && campaign && (
-            <CampaignReview campaignId={campaign.id} />
-          )}
-
-          {/* Campaign Analytics Tab */}
-          {activeTab === 'analytics' && campaign && (
-            <CampaignAnalytics campaignId={campaign.id} />
-          )}
-
           {/* Schedule Tab */}
           {activeTab === 'schedule' && (
             <div className="space-y-6">

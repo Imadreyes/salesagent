@@ -12,7 +12,9 @@ import {
   Crown,
   Zap,
   Users,
-  CheckCircle
+  CheckCircle,
+  ChevronDown,
+  Filter
 } from 'lucide-react';
 
 interface CampaignAnalyticsProps {
@@ -48,6 +50,9 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
   });
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | 'all'>('7d');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     if (campaignId) {
@@ -59,15 +64,19 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
     try {
       // Calculate date range
       const now = new Date();
-      let startDate = new Date();
+      let queryStartDate = new Date();
       
       if (timeRange === '7d') {
-        startDate.setDate(now.getDate() - 7);
+        queryStartDate.setDate(now.getDate() - 7);
       } else if (timeRange === '30d') {
-        startDate.setDate(now.getDate() - 30);
+        queryStartDate.setDate(now.getDate() - 30);
+      } else if (timeRange === 'custom' && startDate && endDate) {
+        queryStartDate = new Date(startDate);
       } else {
-        startDate = new Date('2020-01-01'); // All time
+        queryStartDate = new Date('2020-01-01'); // All time
       }
+
+      const queryEndDate = timeRange === 'custom' && endDate ? new Date(endDate) : now;
 
       // Fetch total leads for this campaign
       const { data: leadsData, error: leadsError } = await supabase
@@ -82,7 +91,8 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
         .from('conversation_history')
         .select('*')
         .eq('campaign_id', campaignId)
-        .gte('timestamp', startDate.toISOString());
+        .gte('timestamp', queryStartDate.toISOString())
+        .lte('timestamp', queryEndDate.toISOString());
 
       if (conversationError) throw conversationError;
 
@@ -91,7 +101,8 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
         .from('bookings')
         .select('*')
         .eq('campaign_id', campaignId)
-        .gte('created_at', startDate.toISOString());
+        .gte('created_at', queryStartDate.toISOString())
+        .lte('created_at', queryEndDate.toISOString());
 
       if (bookingsError) throw bookingsError;
 
@@ -104,10 +115,20 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
       const responseRate = totalOutbound > 0 ? (responsesReceived / totalOutbound) * 100 : 0;
 
       // Generate daily activity data
+      const daysToShow = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 
+                        timeRange === 'custom' && startDate && endDate ? 
+                        Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1 : 7;
+      
       const dailyActivity = [];
-      for (let i = 6; i >= 0; i--) {
+      const baseDate = timeRange === 'custom' && startDate ? new Date(startDate) : now;
+      
+      for (let i = Math.min(daysToShow - 1, 29); i >= 0; i--) {
         const date = new Date();
+        if (timeRange === 'custom' && startDate) {
+          date.setTime(baseDate.getTime() + (daysToShow - 1 - i) * 24 * 60 * 60 * 1000);
+        } else {
         date.setDate(date.getDate() - i);
+        }
         const dateStr = date.toISOString().split('T')[0];
         
         const dayConversations = conversationData?.filter(c => 
@@ -189,15 +210,24 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
         </div>
 
         {/* Time Range Selector */}
-        <div className="flex space-x-1">
+        <div className="flex items-center space-x-2">
+          <div className="flex space-x-1">
           {[
             { key: '7d', label: '7 Days' },
             { key: '30d', label: '30 Days' },
-            { key: 'all', label: 'All Time' }
+            { key: 'all', label: 'All Time' },
+            { key: 'custom', label: 'Custom' }
           ].map((range) => (
             <button
               key={range.key}
-              onClick={() => setTimeRange(range.key as any)}
+              onClick={() => {
+                setTimeRange(range.key as any);
+                if (range.key !== 'custom') {
+                  setShowDatePicker(false);
+                } else {
+                  setShowDatePicker(true);
+                }
+              }}
               className={`px-3 py-1 text-sm rounded-lg transition-colors ${
                 timeRange === range.key
                   ? theme === 'gold'
@@ -211,6 +241,44 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
               {range.label}
             </button>
           ))}
+        </div>
+          
+          {/* Custom Date Range Picker */}
+          {showDatePicker && (
+            <div className="flex items-center space-x-2 ml-4">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className={`px-3 py-1 text-sm border rounded-lg ${
+                  theme === 'gold'
+                    ? 'border-yellow-400/30 bg-black/50 text-gray-200'
+                    : 'border-gray-300 bg-white text-gray-900'
+                }`}
+              />
+              <span className={theme === 'gold' ? 'text-gray-400' : 'text-gray-600'}>to</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className={`px-3 py-1 text-sm border rounded-lg ${
+                  theme === 'gold'
+                    ? 'border-yellow-400/30 bg-black/50 text-gray-200'
+                    : 'border-gray-300 bg-white text-gray-900'
+                }`}
+              />
+              <button
+                onClick={() => fetchAnalytics()}
+                className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                  theme === 'gold'
+                    ? 'gold-gradient text-black'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                Apply
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -358,7 +426,13 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
         <h4 className={`text-md font-semibold mb-4 ${
           theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
         }`}>
-          Daily Activity (Last 7 Days)
+          Daily Activity 
+          {timeRange === 'custom' && startDate && endDate 
+            ? ` (${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()})`
+            : timeRange === '7d' ? ' (Last 7 Days)' 
+            : timeRange === '30d' ? ' (Last 30 Days)'
+            : ' (All Time)'
+          }
         </h4>
 
         <div className="space-y-4">
