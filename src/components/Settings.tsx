@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
 import { 
   User, 
@@ -11,7 +13,13 @@ import {
   Check,
   Crown,
   Zap,
-  Edit2
+  Edit2,
+  Plus,
+  Phone,
+  Mail,
+  Trash2,
+  X,
+  ArrowLeft
 } from 'lucide-react';
 
 export function Settings() {
@@ -360,336 +368,490 @@ export function Settings() {
                 </p>
               </div>
 
-              {/* Twilio Configuration */}
-              <div className={`p-6 rounded-lg border ${
-                theme === 'gold'
-                  ? 'border-yellow-400/20 bg-yellow-400/5'
-                  : 'border-gray-200 bg-gray-50'
-              }`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className={`text-md font-semibold ${
-                      theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
-                    }`}>
-                      Twilio Integration
-                    </h4>
-                    <p className={`text-sm ${
-                      theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
-                      Connect your Twilio account for SMS and voice calls
-                    </p>
-                  </div>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    theme === 'gold'
-                      ? 'bg-red-500/20 text-red-400'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    Not Connected
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Account SID
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                        theme === 'gold'
-                          ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
-                          : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
-                      }`}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Auth Token
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="••••••••••••••••••••••••••••••••"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                        theme === 'gold'
-                          ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
-                          : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                <button className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  theme === 'gold'
-                    ? 'gold-gradient text-black hover-gold'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}>
-                  Connect Twilio
-                </button>
-              </div>
-
-              {/* Phone Numbers */}
-              <div className={`p-6 rounded-lg border ${
-                theme === 'gold'
-                  ? 'border-yellow-400/20 bg-yellow-400/5'
-                  : 'border-gray-200 bg-gray-50'
-              }`}>
-                <h4 className={`text-md font-semibold mb-4 ${
-                  theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
-                }`}>
-                  Phone Numbers
-                </h4>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      SMS Number
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="+1234567890"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                        theme === 'gold'
-                          ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
-                          : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
-                      }`}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      WhatsApp Number
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="+1234567890"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                        theme === 'gold'
-                          ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
-                          : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
-                      }`}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Voice Call Number
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="+1234567890"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                        theme === 'gold'
-                          ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
-                          : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
-                      }`}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* VAPI Configuration */}
-              <div className={`p-6 rounded-lg border ${
-                theme === 'gold'
-                  ? 'border-yellow-400/20 bg-yellow-400/5'
-                  : 'border-gray-200 bg-gray-50'
-              }`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className={`text-md font-semibold ${
-                      theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
-                    }`}>
-                      VAPI Integration
-                    </h4>
-                    <p className={`text-sm ${
-                      theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
-                      Connect VAPI for AI-powered voice calls
-                    </p>
-                  </div>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    theme === 'gold'
-                      ? 'bg-green-500/20 text-green-400'
-                      : 'bg-green-100 text-green-800'
-                  }`}>
-                    Connected
-                  </span>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      VAPI API Key
-                    </label>
-                    <input
-                      type="password"
-                      value="••••••••••••••••••••••••••••••••"
-                      disabled
-                      className={`w-full px-3 py-2 border rounded-lg ${
-                        theme === 'gold'
-                          ? 'border-yellow-400/30 bg-black/30 text-gray-400'
-                          : 'border-gray-300 bg-gray-50 text-gray-500'
-                      }`}
-                    />
-                  </div>
-                  
-                  <div className="flex space-x-3">
-                    <button className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                      theme === 'gold'
-                        ? 'border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                    }`}>
-                      Update API Key
-                    </button>
-                    <button className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                      theme === 'gold'
-                        ? 'border-red-500/30 text-red-400 hover:bg-red-500/10'
-                        : 'border-red-300 text-red-700 hover:bg-red-50'
-                    }`}>
-                      Disconnect
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="mt-4">
-                  <div className="flex items-center justify-between">
-                    <label className={`block text-sm font-medium ${
-                      theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
-                      Calls This Month
-                    </label>
-                    <div className={`text-sm ${
-                      theme === 'gold' ? 'text-gray-300' : 'text-gray-900'
-                    }`}>
-                      342 / 1,000
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-                {/* Email Channel */}
-                <div className={`p-6 rounded-lg border ${
-                  theme === 'gold'
-                    ? 'border-yellow-400/20 bg-yellow-400/5'
-                    : 'border-gray-200 bg-gray-50'
-                }`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg ${
-                        theme === 'gold' ? 'bg-green-500/20' : 'bg-green-100'
-                      }`}>
-                        <MessageSquare className={`h-5 w-5 ${
-                          theme === 'gold' ? 'text-green-400' : 'text-green-600'
-                        }`} />
-                      </div>
-                      <div>
-                        <h4 className={`font-semibold ${
-                          theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
-                        }`}>
-                          Email Provider
-                        </h4>
-                        <p className={`text-sm ${
-                          theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                        }`}>
-                          SMTP Email delivery
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        theme === 'gold'
-                          ? 'bg-yellow-500/20 text-yellow-400'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        Setup Required
-                      </span>
-                      <button className={`p-2 rounded-lg transition-colors ${
-                        theme === 'gold'
-                          ? 'text-gray-400 hover:bg-gray-800'
-                          : 'text-gray-500 hover:bg-gray-100'
-                      }`}>
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className={`block text-xs font-medium mb-1 ${
-                        theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        SMTP Server
-                      </label>
-                      <div className={`text-sm ${
-                        theme === 'gold' ? 'text-gray-500' : 'text-gray-400'
-                      }`}>
-                        Not configured
-                      </div>
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-medium mb-1 ${
-                        theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        From Email
-                      </label>
-                      <div className={`text-sm ${
-                        theme === 'gold' ? 'text-gray-500' : 'text-gray-400'
-                      }`}>
-                        Not configured
-                      </div>
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-medium mb-1 ${
-                        theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        Status
-                      </label>
-                      <div className={`text-sm ${
-                        theme === 'gold' ? 'text-gray-500' : 'text-gray-400'
-                      }`}>
-                        Inactive
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-
-              <div className={`p-4 rounded-lg ${
-                theme === 'gold'
-                  ? 'bg-yellow-400/10 border border-yellow-400/20'
-                  : 'bg-blue-50 border border-blue-200'
-              }`}>
-                {/* Channel Setup Guide */}
-                <h4 className={`text-sm font-medium mb-2 ${
-                  theme === 'gold' ? 'text-yellow-400' : 'text-blue-700'
-                }`}>
-                  Channel Setup Guide
-                </h4>
-                <ul className={`text-sm space-y-1 ${
-                  theme === 'gold' ? 'text-gray-400' : 'text-blue-600'
-                }`}>
-                  <li>• Configure Twilio for SMS, WhatsApp, and voice capabilities</li>
-                  <li>• Set up VAPI for AI-powered voice calls</li>
-                  <li>• Add email provider for automated email sequences</li>
-                  <li>• Test each channel before launching campaigns</li>
-                </ul>
-              </div>
+              <ChannelsManager />
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// New ChannelsManager component
+function ChannelsManager() {
+  const { user } = useAuth();
+  const { theme } = useTheme();
+  const [channels, setChannels] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedChannelType, setSelectedChannelType] = useState<string>('');
+  const [formData, setFormData] = useState<any>({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchChannels();
+    }
+  }, [user]);
+
+  const fetchChannels = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('channels')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setChannels(data || []);
+    } catch (error) {
+      console.error('Error fetching channels:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddChannel = () => {
+    setShowAddModal(true);
+    setSelectedChannelType('');
+    setFormData({});
+  };
+
+  const handleChannelTypeSelect = (type: string) => {
+    setSelectedChannelType(type);
+    setFormData({});
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !selectedChannelType) return;
+
+    setSaving(true);
+    try {
+      const channelData = {
+        user_id: user.id,
+        provider: getProviderFromType(selectedChannelType),
+        channel_type: selectedChannelType,
+        credentials: formData,
+        sender_id: formData.sender_id || null,
+        is_active: true,
+      };
+
+      const { error } = await supabase
+        .from('channels')
+        .insert([channelData]);
+
+      if (error) throw error;
+
+      setShowAddModal(false);
+      fetchChannels();
+    } catch (error) {
+      console.error('Error adding channel:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getProviderFromType = (type: string) => {
+    switch (type) {
+      case 'sms':
+      case 'whatsapp':
+        return 'twilio';
+      case 'voice':
+        return 'vapi';
+      case 'email':
+        return 'instantly';
+      default:
+        return type;
+    }
+  };
+
+  const getChannelIcon = (type: string) => {
+    switch (type) {
+      case 'voice':
+        return Phone;
+      case 'sms':
+      case 'whatsapp':
+        return MessageSquare;
+      case 'email':
+        return Mail;
+      default:
+        return MessageSquare;
+    }
+  };
+
+  const getStatusColor = (isActive: boolean) => {
+    return isActive
+      ? theme === 'gold'
+        ? 'bg-green-500/20 text-green-400'
+        : 'bg-green-100 text-green-800'
+      : theme === 'gold'
+        ? 'bg-red-500/20 text-red-400'
+        : 'bg-red-100 text-red-800';
+  };
+
+  const deleteChannel = async (channelId: string) => {
+    if (!confirm('Are you sure you want to delete this channel?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('channels')
+        .delete()
+        .eq('id', channelId);
+
+      if (error) throw error;
+      fetchChannels();
+    } catch (error) {
+      console.error('Error deleting channel:', error);
+    }
+  };
+
+  const channelTypes = [
+    {
+      type: 'voice',
+      label: 'VAPI Voice Calls',
+      description: 'AI-powered voice calling',
+      icon: Phone,
+      fields: [
+        { key: 'api_key', label: 'VAPI API Key', type: 'password', required: true },
+        { key: 'phone_number', label: 'Phone Number', type: 'tel', required: false },
+      ]
+    },
+    {
+      type: 'sms',
+      label: 'Twilio SMS',
+      description: 'Text messaging via Twilio',
+      icon: MessageSquare,
+      fields: [
+        { key: 'account_sid', label: 'Account SID', type: 'text', required: true },
+        { key: 'auth_token', label: 'Auth Token', type: 'password', required: true },
+        { key: 'sender_id', label: 'From Number', type: 'tel', required: true },
+      ]
+    },
+    {
+      type: 'whatsapp',
+      label: 'Twilio WhatsApp',
+      description: 'WhatsApp messaging via Twilio',
+      icon: MessageSquare,
+      fields: [
+        { key: 'account_sid', label: 'Account SID', type: 'text', required: true },
+        { key: 'auth_token', label: 'Auth Token', type: 'password', required: true },
+        { key: 'sender_id', label: 'WhatsApp Number', type: 'tel', required: true },
+      ]
+    },
+    {
+      type: 'email',
+      label: 'Instantly.ai Email',
+      description: 'Email campaigns via Instantly.ai',
+      icon: Mail,
+      fields: [
+        { key: 'api_key', label: 'API Key', type: 'password', required: true },
+        { key: 'sender_id', label: 'From Email', type: 'email', required: true },
+      ]
+    }
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <div className={`animate-spin rounded-full h-8 w-8 border-2 border-transparent ${
+          theme === 'gold' ? 'border-t-yellow-400' : 'border-t-blue-600'
+        }`}></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header with Add button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className={`text-lg font-semibold ${
+            theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+          }`}>
+            Connected Channels ({channels.length})
+          </h3>
+          <p className={`text-sm ${
+            theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+          }`}>
+            Manage your communication channel integrations
+          </p>
+        </div>
+        <button
+          onClick={handleAddChannel}
+          className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+            theme === 'gold'
+              ? 'gold-gradient text-black hover-gold'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Channel
+        </button>
+      </div>
+
+      {/* Channels List */}
+      {channels.length === 0 ? (
+        <div className={`text-center py-12 border-2 border-dashed rounded-lg ${
+          theme === 'gold'
+            ? 'border-yellow-400/30 text-gray-400'
+            : 'border-gray-300 text-gray-500'
+        }`}>
+          <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <h3 className={`text-lg font-medium mb-2 ${
+            theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+          }`}>
+            No channels configured
+          </h3>
+          <p className="mb-4">Add your first communication channel to start outreach</p>
+          <button
+            onClick={handleAddChannel}
+            className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              theme === 'gold'
+                ? 'gold-gradient text-black hover-gold'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add First Channel
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {channels.map((channel) => {
+            const Icon = getChannelIcon(channel.channel_type);
+            return (
+              <div
+                key={channel.id}
+                className={`p-6 rounded-lg border ${
+                  theme === 'gold'
+                    ? 'border-yellow-400/20 bg-black/20'
+                    : 'border-gray-200 bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-3 rounded-lg ${
+                      theme === 'gold' ? 'bg-yellow-400/20' : 'bg-blue-100'
+                    }`}>
+                      <Icon className={`h-6 w-6 ${
+                        theme === 'gold' ? 'text-yellow-400' : 'text-blue-600'
+                      }`} />
+                    </div>
+                    <div>
+                      <h4 className={`text-lg font-semibold ${
+                        theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+                      }`}>
+                        {channel.provider.charAt(0).toUpperCase() + channel.provider.slice(1)} {channel.channel_type.charAt(0).toUpperCase() + channel.channel_type.slice(1)}
+                      </h4>
+                      <p className={`text-sm ${
+                        theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        {channel.sender_id && `From: ${channel.sender_id}`}
+                      </p>
+                      <p className={`text-xs ${
+                        theme === 'gold' ? 'text-gray-500' : 'text-gray-500'
+                      }`}>
+                        Added {new Date(channel.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(channel.is_active)}`}>
+                      {channel.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                    
+                    <div className={`text-sm ${
+                      theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      {channel.usage_count || 0} / {channel.max_usage || 100} used
+                    </div>
+                    
+                    <button
+                      onClick={() => deleteChannel(channel.id)}
+                      className={`p-2 rounded-lg transition-colors ${
+                        theme === 'gold'
+                          ? 'text-red-400 hover:bg-red-400/10'
+                          : 'text-red-600 hover:bg-red-50'
+                      }`}
+                      title="Delete channel"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Add Channel Modal */}
+      {showAddModal && (
+        <div className={`fixed inset-0 z-50 overflow-y-auto ${
+          theme === 'gold' ? 'bg-black/75' : 'bg-gray-900/50'
+        }`}>
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className={`w-full max-w-md rounded-xl shadow-2xl ${
+              theme === 'gold' ? 'black-card gold-border' : 'bg-white border border-gray-200'
+            }`}>
+              <div className={`p-6 border-b ${
+                theme === 'gold' ? 'border-yellow-400/20' : 'border-gray-200'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <h3 className={`text-lg font-semibold ${
+                    theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+                  }`}>
+                    Add Communication Channel
+                  </h3>
+                  <button
+                    onClick={() => setShowAddModal(false)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      theme === 'gold'
+                        ? 'text-gray-400 hover:bg-gray-800'
+                        : 'text-gray-500 hover:bg-gray-100'
+                    }`}
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6">
+                {!selectedChannelType ? (
+                  /* Channel Type Selection */
+                  <div className="space-y-3">
+                    <p className={`text-sm mb-4 ${
+                      theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      Choose a communication channel to add:
+                    </p>
+                    {channelTypes.map((channelType) => {
+                      const Icon = channelType.icon;
+                      return (
+                        <button
+                          key={channelType.type}
+                          onClick={() => handleChannelTypeSelect(channelType.type)}
+                          className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                            theme === 'gold'
+                              ? 'border-yellow-400/20 hover:border-yellow-400/40 hover:bg-yellow-400/5'
+                              : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Icon className={`h-6 w-6 ${
+                              theme === 'gold' ? 'text-yellow-400' : 'text-blue-600'
+                            }`} />
+                            <div>
+                              <div className={`font-medium ${
+                                theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+                              }`}>
+                                {channelType.label}
+                              </div>
+                              <div className={`text-sm ${
+                                theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                              }`}>
+                                {channelType.description}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Channel Configuration Form */
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedChannelType('')}
+                        className={`p-2 rounded-lg transition-colors ${
+                          theme === 'gold'
+                            ? 'text-gray-400 hover:bg-gray-800'
+                            : 'text-gray-500 hover:bg-gray-100'
+                        }`}
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </button>
+                      <h4 className={`text-md font-semibold ${
+                        theme === 'gold' ? 'text-gray-200' : 'text-gray-900'
+                      }`}>
+                        Configure {channelTypes.find(ct => ct.type === selectedChannelType)?.label}
+                      </h4>
+                    </div>
+
+                    {channelTypes
+                      .find(ct => ct.type === selectedChannelType)
+                      ?.fields.map((field) => (
+                        <div key={field.key}>
+                          <label className={`block text-sm font-medium mb-2 ${
+                            theme === 'gold' ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            {field.label} {field.required && '*'}
+                          </label>
+                          <input
+                            type={field.type}
+                            required={field.required}
+                            value={formData[field.key] || ''}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              [field.key]: e.target.value
+                            })}
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                              theme === 'gold'
+                                ? 'border-yellow-400/30 bg-black/50 text-gray-200 placeholder-gray-500 focus:ring-yellow-400'
+                                : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-500'
+                            }`}
+                            placeholder={`Enter ${field.label.toLowerCase()}`}
+                          />
+                        </div>
+                      ))}
+
+                    <div className="flex space-x-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddModal(false)}
+                        className={`flex-1 px-4 py-2 text-sm rounded-lg transition-colors ${
+                          theme === 'gold'
+                            ? 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700'
+                            : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
+                        }`}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={saving}
+                        className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          theme === 'gold'
+                            ? 'gold-gradient text-black hover-gold'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        {saving ? (
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                            Adding...
+                          </div>
+                        ) : (
+                          'Add Channel'
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
           {/* Billing Tab */}
           {activeTab === 'billing' && (
