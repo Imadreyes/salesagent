@@ -333,7 +333,7 @@ export function LeadsTracker() {
               : 'border-t-blue-600 border-r-blue-500'
           }`}></div>
           {theme === 'gold' ? (
-            <Crown className="absolute inset-0 m-auto h-4 w-4 text-yellow-400" />
+            <Activity className="absolute inset-0 m-auto h-4 w-4 text-yellow-400" />
           ) : (
             <Activity className="absolute inset-0 m-auto h-4 w-4 text-blue-600" />
           )}

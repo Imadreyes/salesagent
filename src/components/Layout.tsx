@@ -104,15 +104,9 @@ export function Layout() {
         }`}>
           <div className="flex items-center space-x-2">
             {theme === 'gold' ? (
-              <>
-                <Crown className="h-6 w-6 text-yellow-400" />
-                <h1 className="text-xl font-bold gold-text-gradient">Elite Outreach</h1>
-              </>
+              <Activity className="h-6 w-6 text-yellow-400" />
             ) : (
-              <>
-                <Zap className="h-6 w-6 text-blue-600" />
-                <h1 className="text-xl font-bold text-gray-900">Cold Outreach</h1>
-              </>
+              <Activity className="h-6 w-6 text-blue-600" />
             )}
           </div>
           <button
@@ -223,19 +217,9 @@ export function Layout() {
             </button>
             <div className="flex items-center space-x-2">
               {theme === 'gold' ? (
-                <>
-                  <Crown className="h-6 w-6 text-yellow-400" />
-                  <h1 className="text-lg font-semibold gold-text-gradient">
-                    Elite Outreach
-                  </h1>
-                </>
+                <Activity className="h-6 w-6 text-yellow-400" />
               ) : (
-                <>
-                  <Target className="h-6 w-6 text-blue-600" />
-                  <h1 className="text-lg font-semibold text-gray-900">
-                    Cold Outreach
-                  </h1>
-                </>
+                <Activity className="h-6 w-6 text-blue-600" />
               )}
             </div>
             <div className="w-6"></div>
