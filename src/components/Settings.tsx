@@ -549,18 +549,35 @@ export function Settings() {
                     <button className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
                       theme === 'gold'
                         ? 'border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10'
-                        theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        Calls This Month
-                      </label>
-                      <div className={`text-sm ${
-                        theme === 'gold' ? 'text-gray-300' : 'text-gray-900'
-                      }`}>
-                        342 / 1,000
-                      </div>
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}>
+                      Update API Key
+                    </button>
+                    <button className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                      theme === 'gold'
+                        ? 'border-red-500/30 text-red-400 hover:bg-red-500/10'
+                        : 'border-red-300 text-red-700 hover:bg-red-50'
+                    }`}>
+                      Disconnect
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="mt-4">
+                  <div className="flex items-center justify-between">
+                    <label className={`block text-sm font-medium ${
+                      theme === 'gold' ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      Calls This Month
+                    </label>
+                    <div className={`text-sm ${
+                      theme === 'gold' ? 'text-gray-300' : 'text-gray-900'
+                    }`}>
+                      342 / 1,000
                     </div>
                   </div>
                 </div>
+              </div>
 
                 {/* Email Channel */}
                 <div className={`p-6 rounded-lg border ${
