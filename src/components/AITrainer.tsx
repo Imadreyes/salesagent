@@ -69,30 +69,36 @@ export function AITrainer({ campaignId }: AITrainerProps) {
     e.preventDefault();
     if (!user) return;
 
-    console.log('Starting form submission...');
-    console.log('Form data:', formData);
-    console.log('User ID:', user.id);
-    console.log('Campaign ID:', campaignId);
-
-    // Enhanced validation
+    // Clear any previous errors
+    setUploadResult(null);
+    
+    // Basic validation
     if (!formData.title.trim()) {
-      alert('Please enter a title');
+      setUploadResult({
+        success: false,
+        message: 'Please enter a title for your training resource'
+      });
       return;
     }
 
     if (formData.resource_type === 'note' && !formData.content.trim()) {
-      alert('Please enter content for the note');
+      setUploadResult({
+        success: false,
+        message: 'Please enter content for the note'
+      });
       return;
     }
 
     if (formData.resource_type === 'link' && !formData.link_url.trim()) {
-      alert('Please enter a URL for the link');
+      setUploadResult({
+        success: false,
+        message: 'Please enter a URL for the link'
+      });
       return;
     }
 
     setSaving(true);
     try {
-      console.log('Processing tags...');
       const tagsArray = formData.tags
         .split(',')
         .map(tag => tag.trim())
@@ -101,33 +107,21 @@ export function AITrainer({ campaignId }: AITrainerProps) {
       const resourceData = {
         user_id: user.id,
         campaign_id: campaignId || null,
-        resource_type: formData.resource_type,
+        type: formData.resource_type, // Updated to match database schema
         title: formData.title || null,
         content: formData.resource_type === 'note' ? formData.content : null,
-        link_url: formData.resource_type === 'link' ? formData.link_url : null,
-        tags: tagsArray.length > 0 ? tagsArray : null,
+        content: formData.resource_type === 'link' ? formData.link_url : (formData.resource_type === 'note' ? formData.content : null),
       };
 
-      console.log('Inserting training resource:', resourceData);
-
-      // First, let's check if the table exists and we can connect
-      console.log('Attempting to insert into training_resources table...');
       const { data, error } = await supabase
         .from('training_resources')
         .insert([resourceData])
         .select();
 
       if (error) {
-        console.error('Supabase error:', error);
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
         throw error;
       }
 
-      console.log('Successfully inserted:', data);
       // Trigger AI trainer webhook
       try {
         await fetch('https://mazirhx.app.n8n.cloud/webhook/ai-trainer', {
@@ -142,8 +136,7 @@ export function AITrainer({ campaignId }: AITrainerProps) {
           }),
         });
       } catch (webhookError) {
-        console.error('Webhook error:', webhookError);
-        console.warn('Webhook failed, but resource saved:', webhookError);
+        // Webhook failure is not critical, resource is still saved
       }
 
       setFormData({
@@ -156,15 +149,21 @@ export function AITrainer({ campaignId }: AITrainerProps) {
       setShowAddForm(false);
       fetchResources();
       
-      // Show success message
-      alert('Training resource saved successfully!');
+      setUploadResult({
+        success: true,
+        message: 'Training resource saved successfully!'
+      });
     } catch (error) {
-      console.error('Error saving training resource:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`Failed to save training resource: ${errorMessage}`);
+      setUploadResult({
+        success: false,
+        message: `Failed to save training resource: ${errorMessage}`,
+        errors: error instanceof Error && error.message.includes('column') 
+          ? ['Database schema mismatch. Please contact support.']
+          : undefined
+      });
     } finally {
       setSaving(false);
-      console.log('Form submission completed');
     }
   };
 
